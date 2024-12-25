@@ -1,6 +1,9 @@
-import { pgTable, serial, text, integer } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
-export const user = pgTable('user', {
-	id: serial('id').primaryKey(),
-	age: integer('age')
+export const usersTable = pgTable('users', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	authProvider: text('auth_provider').notNull(),
+	authProviderId: text('auth_provider_id').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
