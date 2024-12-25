@@ -34,4 +34,18 @@ export class ClerkAuthProvider implements IAuthProvider {
 
 		return ids[0].id;
 	}
+
+	async isAdmin() {
+		const clerkUserId = this.auth.userId;
+
+		if (!clerkUserId) {
+			return false;
+		}
+
+		const user = await db.query.usersTable.findFirst({
+			where: eq(usersTable.authProviderId, clerkUserId)
+		});
+
+		return user?.isAdmin ?? false;
+	}
 }
