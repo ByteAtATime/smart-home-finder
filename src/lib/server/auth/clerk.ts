@@ -25,6 +25,10 @@ export class ClerkAuthProvider implements IAuthProvider {
 			.execute();
 
 		if (ids.length === 0) {
+			await db.insert(usersTable).values({
+				authProvider: 'clerk',
+				authProviderId: clerkUserId
+			});
 			return null;
 		}
 
