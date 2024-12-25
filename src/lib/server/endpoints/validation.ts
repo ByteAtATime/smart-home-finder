@@ -19,7 +19,7 @@ export const withBodySchema = <TDeps extends { body: z.infer<TSchema> }, TSchema
 
 		try {
 			const body = schema.parse(rawBody);
-			return next({ ...deps, body } as TDeps, event);
+			return next({ ...deps, body } as TDeps);
 		} catch (e) {
 			if (e instanceof z.ZodError) {
 				return json(
@@ -44,6 +44,6 @@ export const withRouteParams = <
 >(): MiddlewareHandler<Omit<TDeps, 'params'>> => {
 	return async (deps, event, next) => {
 		const params = event.params as Partial<TParams>;
-		return next({ ...deps, params } as TDeps, event);
+		return next({ ...deps, params } as TDeps);
 	};
 };

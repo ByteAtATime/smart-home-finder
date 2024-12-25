@@ -6,9 +6,6 @@ export type MiddlewareHandler<TDeps> = (
 	next: EndpointHandler<TDeps>
 ) => Promise<Response> | Response;
 
-export type EndpointHandler<TDeps> = (
-	deps: TDeps,
-	event: RequestEvent
-) => Promise<Response> | Response;
+export type EndpointHandler<TDeps> = (deps: TDeps) => Promise<Response> | Response;
 
 export type Handler<TDeps> = MiddlewareHandler<TDeps> | EndpointHandler<TDeps>;
