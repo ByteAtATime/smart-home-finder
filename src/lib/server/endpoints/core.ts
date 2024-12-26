@@ -1,5 +1,6 @@
 import type { RequestEvent, RequestHandler } from '@sveltejs/kit';
 import type { EndpointHandler, MiddlewareHandler } from './types';
+import { json } from '@sveltejs/kit';
 
 type ComposedHandler<TDeps> = (deps: TDeps, event: RequestEvent) => Response | Promise<Response>;
 
@@ -11,9 +12,16 @@ export const compose = <TDeps extends Record<string, unknown>>(
 			(next, middleware) => {
 				return (deps, event) => middleware(deps, event, (newDeps) => next(newDeps, event));
 			},
-			(deps) => handler(deps)
+			(deps, event) => handler(deps)
 		);
 
-		return (event) => composedMiddleware({} as TDeps, event);
+		return async (event) => {
+			try {
+				return await composedMiddleware({} as TDeps, event);
+			} catch (e) {
+				console.error(e);
+				return json({ error: 'Internal server error' }, { status: 500 });
+			}
+		};
 	};
 };

@@ -1,6 +1,7 @@
 import type { IAuthProvider } from '$lib/server/auth/types';
 import { insertDeviceSchema, type IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
+import { json } from '@sveltejs/kit';
 import type { z } from 'zod';
 
 export const postBodySchema = insertDeviceSchema;
@@ -10,5 +11,11 @@ export const endpoint_POST: EndpointHandler<{
 	deviceRepository: IDeviceRepository;
 	body: z.infer<typeof postBodySchema>;
 }> = async ({ authProvider, deviceRepository, body }) => {
-	return new Response('ok');
+	if (!(await authProvider.isAdmin())) {
+		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
+	}
+
+	const deviceId = await deviceRepository.insertDevice(body);
+
+	return json({ success: true, id: deviceId }, { status: 201 });
 };
