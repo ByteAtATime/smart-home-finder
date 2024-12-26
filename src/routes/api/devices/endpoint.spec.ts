@@ -7,10 +7,8 @@ import type { InsertDeviceSchema, SelectDeviceSchema } from '$lib/server/devices
 const mockDevice = {
 	id: 1,
 	name: 'Test Device',
-	deviceType: 'test device type',
-	brand: 'test brand',
-	model: 'test model',
-	protocol: 'test protocol',
+	deviceType: 'light',
+	protocol: 'zwave',
 	createdAt: new Date(),
 	updatedAt: new Date()
 } satisfies SelectDeviceSchema;
