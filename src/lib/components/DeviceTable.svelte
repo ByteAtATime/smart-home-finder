@@ -1,9 +1,5 @@
 <script lang="ts">
-	import {
-		type PaginationState,
-		getCoreRowModel,
-		getPaginationRowModel
-	} from '@tanstack/table-core';
+	import { getCoreRowModel, getPaginationRowModel } from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Pagination from '$lib/components/ui/pagination';

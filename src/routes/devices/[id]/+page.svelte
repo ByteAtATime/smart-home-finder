@@ -1,6 +1,5 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
 	import * as Carousel from '$lib/components/ui/carousel';
 	import { Badge } from '$lib/components/ui/badge';
 
@@ -40,7 +39,7 @@
 			<div class="w-full space-y-4">
 				<h2 class="text-xl font-semibold">Properties</h2>
 				<div class="grid grid-cols-2 gap-4">
-					{#each Object.entries(device.properties) as [key, prop]}
+					{#each Object.entries(device.properties) as [_, prop]}
 						<div class="rounded-lg bg-secondary/20 p-4">
 							<div class="text-sm text-muted-foreground">{prop.name}</div>
 							<div class="text-lg font-medium">

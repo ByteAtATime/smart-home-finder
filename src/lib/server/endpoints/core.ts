@@ -10,7 +10,7 @@ export const compose = (...middlewares: MiddlewareHandler<any>[]) => {
 			(next, middleware) => {
 				return (deps, event) => middleware(deps, event, (newDeps) => next(newDeps, event));
 			},
-			(deps, event) => handler(deps)
+			(deps) => handler(deps)
 		);
 
 		return async (event) => {

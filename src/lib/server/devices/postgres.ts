@@ -1,11 +1,6 @@
 import { count, eq } from 'drizzle-orm';
 import type { Device, DeviceWithProperties, InsertDevice, PaginatedDevices } from '$lib/types/db';
-import {
-	devicePropertiesTable,
-	devicesTable,
-	propertiesTable,
-	propertyTypeEnum
-} from '$lib/server/db/schema';
+import { devicePropertiesTable, devicesTable, propertiesTable } from '$lib/server/db/schema';
 import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
