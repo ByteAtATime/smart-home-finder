@@ -26,6 +26,7 @@ export const endpoint_GET: EndpointHandler<{
 		success: true,
 		total: devices.total,
 		pageSize: query.pageSize,
+		page: query.page,
 		devices: devicesWithProperties
 	});
 };
