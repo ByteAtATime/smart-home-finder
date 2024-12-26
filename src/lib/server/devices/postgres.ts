@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { count, eq, sql } from 'drizzle-orm';
 import type {
 	InsertDeviceSchema,
 	SelectDeviceSchema,
@@ -24,8 +24,9 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 			offset: (page - 1) * pageSize,
 			limit: pageSize
 		});
+		const total = await db.select({ count: count() }).from(devicesTable).execute();
 
-		return { devices, total: devices.length };
+		return { devices, total: total[0].count };
 	}
 
 	async addDeviceProperty(
