@@ -50,6 +50,7 @@
 		"vitest": "^2.0.4"
 	},
 	"dependencies": {
+		"@tanstack/table-core": "^8.20.5",
 		"clerk-sveltekit": "https://pkg.pr.new/wobsoriano/clerk-sveltekit@2202a23",
 		"drizzle-orm": "^0.38.3",
 		"drizzle-seed": "^0.2.1",
