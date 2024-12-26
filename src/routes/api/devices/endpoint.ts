@@ -22,7 +22,12 @@ export const endpoint_GET: EndpointHandler<{
 		}))
 	);
 
-	return json({ success: true, total: devices.total, devices: devicesWithProperties });
+	return json({
+		success: true,
+		total: devices.total,
+		pageSize: query.pageSize,
+		devices: devicesWithProperties
+	});
 };
 
 export const postBodySchema = insertDeviceSchema;

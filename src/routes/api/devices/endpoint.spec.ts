@@ -41,6 +41,7 @@ describe('devices', () => {
 			expect(await endpoint.json()).toEqual({
 				success: true,
 				devices: [resultDevice],
+				pageSize: query.pageSize,
 				total: 1
 			});
 		});
