@@ -5,8 +5,8 @@ import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
 export const querySchema = z.object({
-	page: z.number().min(1).optional().default(1),
-	pageSize: z.number().min(1).max(100).optional().default(10)
+	page: z.coerce.number().min(1).optional().default(1),
+	pageSize: z.coerce.number().min(1).max(100).optional().default(10)
 });
 
 export const endpoint_GET: EndpointHandler<{
