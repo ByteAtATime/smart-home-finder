@@ -22,7 +22,7 @@ async function main() {
 	const [property] = await db
 		.insert(schema.propertiesTable)
 		.values({
-			name: 'Voltage',
+			id: 'voltage',
 			type: 'float',
 			unit: 'V'
 		})

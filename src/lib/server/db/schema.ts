@@ -11,7 +11,8 @@ import {
 	serial,
 	text,
 	timestamp,
-	uuid
+	uuid,
+	varchar
 } from 'drizzle-orm/pg-core';
 
 export const usersTable = pgTable('users', {
@@ -37,8 +38,7 @@ export const devicesTable = pgTable('devices', {
 });
 
 export const propertiesTable = pgTable('properties', {
-	id: serial('id').primaryKey(),
-	name: text('name').notNull(),
+	id: varchar('id', { length: 255 }).primaryKey(),
 	type: propertyTypeEnum('type').notNull(),
 	unit: text('unit'),
 	description: text('description'),
@@ -52,7 +52,7 @@ export const devicePropertiesTable = pgTable(
 		deviceId: integer('device_id')
 			.references(() => devicesTable.id)
 			.notNull(),
-		propertyId: integer('property_id')
+		propertyId: varchar('property_id', { length: 255 })
 			.references(() => propertiesTable.id)
 			.notNull(),
 		intValue: integer('int_value'),

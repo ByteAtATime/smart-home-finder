@@ -9,7 +9,14 @@ export const endpoint_GET: EndpointHandler<{
 }> = async ({ deviceRepository }) => {
 	const devices = await deviceRepository.getAllDevices();
 
-	return json({ success: true, devices });
+	const devicesWithProperties = await Promise.all(
+		devices.map(async (device) => ({
+			...device,
+			properties: await deviceRepository.getDeviceProperties(device.id)
+		}))
+	);
+
+	return json({ success: true, devices: devicesWithProperties });
 };
 
 export const postBodySchema = insertDeviceSchema;

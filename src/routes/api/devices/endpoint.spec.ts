@@ -2,7 +2,7 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET, endpoint_POST } from './endpoint';
-import type { InsertDeviceSchema, SelectDeviceSchema } from '$lib/server/devices/types';
+import type { DeviceProperties, SelectDeviceSchema } from '$lib/server/devices/types';
 
 const mockDevice = {
 	id: 1,
@@ -12,7 +12,12 @@ const mockDevice = {
 	createdAt: new Date(),
 	updatedAt: new Date()
 } satisfies SelectDeviceSchema;
-const resultDevice = JSON.parse(JSON.stringify(mockDevice));
+const mockDeviceProperties = {
+	voltage: { type: 'float', value: 123.45 }
+} satisfies DeviceProperties;
+const resultDevice = JSON.parse(
+	JSON.stringify({ ...mockDevice, properties: mockDeviceProperties })
+);
 
 describe('devices', () => {
 	describe('GET', () => {
@@ -20,6 +25,7 @@ describe('devices', () => {
 			const deviceRepository = new MockDeviceRepository();
 
 			deviceRepository.getAllDevices = vi.fn().mockResolvedValue([mockDevice]);
+			deviceRepository.getDeviceProperties = vi.fn().mockResolvedValue(mockDeviceProperties);
 
 			const endpoint = await endpoint_GET({ deviceRepository });
 
