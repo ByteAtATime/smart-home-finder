@@ -11,4 +11,5 @@ export type InsertDeviceSchema = z.infer<typeof insertDeviceSchema>;
 export interface IDeviceRepository {
 	getDeviceById(id: number): Promise<SelectDeviceSchema | null>;
 	insertDevice(device: InsertDeviceSchema): Promise<number>;
+	getAllDevices(): Promise<SelectDeviceSchema[]>;
 }

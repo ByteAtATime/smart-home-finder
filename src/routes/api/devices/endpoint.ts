@@ -4,6 +4,14 @@ import type { EndpointHandler } from '$lib/server/endpoints';
 import { json } from '@sveltejs/kit';
 import type { z } from 'zod';
 
+export const endpoint_GET: EndpointHandler<{
+	deviceRepository: IDeviceRepository;
+}> = async ({ deviceRepository }) => {
+	const devices = await deviceRepository.getAllDevices();
+
+	return json({ success: true, devices });
+};
+
 export const postBodySchema = insertDeviceSchema;
 
 export const endpoint_POST: EndpointHandler<{

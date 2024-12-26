@@ -1,47 +1,70 @@
 import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
-import { endpoint_POST, postBodySchema } from './endpoint';
-import type { InsertDeviceSchema } from '$lib/server/devices/types';
+import { endpoint_GET, endpoint_POST } from './endpoint';
+import type { InsertDeviceSchema, SelectDeviceSchema } from '$lib/server/devices/types';
+
+const mockDevice = {
+	id: 1,
+	name: 'Test Device',
+	deviceType: 'test device type',
+	brand: 'test brand',
+	model: 'test model',
+	protocol: 'test protocol',
+	createdAt: new Date(),
+	updatedAt: new Date()
+} satisfies SelectDeviceSchema;
+const resultDevice = JSON.parse(JSON.stringify(mockDevice));
 
 describe('devices', () => {
-	it('should allow an admin to create a device', async () => {
-		const deviceRepository = new MockDeviceRepository();
-		const authProvider = new MockAuthProvider().mockAdmin();
-		const body = {
-			name: 'Test Device',
-			deviceType: 'test device type',
-			brand: 'test brand',
-			model: 'test model',
-			protocol: 'test protocol'
-		} satisfies InsertDeviceSchema;
+	describe('GET', () => {
+		it('should return a list of devices', async () => {
+			const deviceRepository = new MockDeviceRepository();
 
-		deviceRepository.insertDevice = vi.fn().mockResolvedValue(1);
+			deviceRepository.getAllDevices = vi.fn().mockResolvedValue([mockDevice]);
 
-		const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
+			const endpoint = await endpoint_GET({ deviceRepository });
 
-		expect(deviceRepository.insertDevice).toHaveBeenCalledWith(body);
-		expect(endpoint.status).toBe(201);
-		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
-		expect(await endpoint.json()).toEqual({ success: true, id: 1 });
+			expect(deviceRepository.getAllDevices).toHaveBeenCalled();
+			expect(endpoint.status).toBe(200);
+			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
+			expect(await endpoint.json()).toEqual({ success: true, devices: [resultDevice] });
+		});
 	});
 
-	it('should return 401 if the user is not an admin', async () => {
-		const deviceRepository = new MockDeviceRepository();
-		const authProvider = new MockAuthProvider().mockSignedIn();
-		const body = {
-			name: 'Test Device',
-			deviceType: 'test device type',
-			brand: 'test brand',
-			model: 'test model',
-			protocol: 'test protocol'
-		} satisfies InsertDeviceSchema;
+	describe('POST', () => {
+		it('should allow an admin to create a device', async () => {
+			const deviceRepository = new MockDeviceRepository();
+			const authProvider = new MockAuthProvider().mockAdmin();
+			const body = mockDevice;
 
-		const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
+			deviceRepository.insertDevice = vi.fn().mockResolvedValue(1);
 
-		expect(deviceRepository.insertDevice).not.toHaveBeenCalled();
-		expect(endpoint.status).toBe(401);
-		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
-		expect(await endpoint.json()).toEqual({ success: false, error: 'Unauthorized' });
+			const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
+
+			expect(deviceRepository.insertDevice).toHaveBeenCalledWith(body);
+			expect(endpoint.status).toBe(201);
+			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
+			expect(await endpoint.json()).toEqual({ success: true, id: 1 });
+		});
+
+		it('should return 401 if the user is not an admin', async () => {
+			const deviceRepository = new MockDeviceRepository();
+			const authProvider = new MockAuthProvider().mockSignedIn();
+			const body = {
+				name: 'Test Device',
+				deviceType: 'test device type',
+				brand: 'test brand',
+				model: 'test model',
+				protocol: 'test protocol'
+			} satisfies InsertDeviceSchema;
+
+			const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
+
+			expect(deviceRepository.insertDevice).not.toHaveBeenCalled();
+			expect(endpoint.status).toBe(401);
+			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
+			expect(await endpoint.json()).toEqual({ success: false, error: 'Unauthorized' });
+		});
 	});
 });
