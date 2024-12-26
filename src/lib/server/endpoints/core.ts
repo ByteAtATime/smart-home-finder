@@ -4,10 +4,8 @@ import { json } from '@sveltejs/kit';
 
 type ComposedHandler<TDeps> = (deps: TDeps, event: RequestEvent) => Response | Promise<Response>;
 
-export const compose = <TDeps extends Record<string, unknown>>(
-	...middlewares: MiddlewareHandler<any>[]
-) => {
-	return (handler: EndpointHandler<TDeps>): RequestHandler => {
+export const compose = (...middlewares: MiddlewareHandler<any>[]) => {
+	return <TDeps>(handler: EndpointHandler<TDeps>): RequestHandler => {
 		const composedMiddleware = middlewares.reduceRight<ComposedHandler<TDeps>>(
 			(next, middleware) => {
 				return (deps, event) => middleware(deps, event, (newDeps) => next(newDeps, event));

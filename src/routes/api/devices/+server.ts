@@ -3,11 +3,10 @@ import { withAuthProvider, withDeviceRepository } from '$lib/server/endpoints/de
 import { withBodySchema } from '$lib/server/endpoints/validation';
 import { endpoint_GET, endpoint_POST, postBodySchema } from './endpoint';
 
-export const GET = compose(withDeviceRepository(), endpoint_GET);
+export const GET = compose(withDeviceRepository())(endpoint_GET);
 
 export const POST = compose(
 	withAuthProvider(),
 	withBodySchema(postBodySchema),
-	withDeviceRepository(),
-	endpoint_POST
-);
+	withDeviceRepository()
+)(endpoint_POST);
