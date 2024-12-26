@@ -20,7 +20,7 @@ export type PropertyValue =
 	| { type: 'string'; value: string }
 	| { type: 'boolean'; value: boolean };
 
-export type DeviceProperties = Record<string, PropertyValue>;
+export type DeviceProperties = Record<string, PropertyValue & { name: string }>;
 export type SelectDeviceWithProperties = SelectDeviceSchema & {
 	properties: DeviceProperties;
 };

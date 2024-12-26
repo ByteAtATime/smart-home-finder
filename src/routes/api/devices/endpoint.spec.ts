@@ -13,7 +13,7 @@ const mockDevice = {
 	updatedAt: new Date()
 } satisfies SelectDeviceSchema;
 const mockDeviceProperties = {
-	voltage: { type: 'float', value: 123.45 }
+	voltage: { type: 'float', value: 123.45, name: 'Voltage' }
 } satisfies DeviceProperties;
 const resultDevice = JSON.parse(
 	JSON.stringify({ ...mockDevice, properties: mockDeviceProperties })

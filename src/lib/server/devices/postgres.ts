@@ -41,7 +41,8 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				intValue: devicePropertiesTable.intValue,
 				floatValue: devicePropertiesTable.floatValue,
 				stringValue: devicePropertiesTable.stringValue,
-				booleanValue: devicePropertiesTable.booleanValue
+				booleanValue: devicePropertiesTable.booleanValue,
+				name: propertiesTable.name
 			})
 			.from(devicePropertiesTable)
 			.leftJoin(propertiesTable, eq(devicePropertiesTable.propertyId, propertiesTable.id))
@@ -65,7 +66,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				continue;
 			}
 
-			deviceProperties[property.id] = propertyValue;
+			deviceProperties[property.id] = { ...propertyValue, name: property.name! };
 		}
 
 		return deviceProperties;

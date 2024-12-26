@@ -39,6 +39,7 @@ export const devicesTable = pgTable('devices', {
 
 export const propertiesTable = pgTable('properties', {
 	id: varchar('id', { length: 255 }).primaryKey(),
+	name: text('name').notNull(),
 	type: propertyTypeEnum('type').notNull(),
 	unit: text('unit'),
 	description: text('description'),

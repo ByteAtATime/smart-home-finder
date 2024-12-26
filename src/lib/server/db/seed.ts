@@ -23,6 +23,7 @@ async function main() {
 		.insert(schema.propertiesTable)
 		.values({
 			id: 'voltage',
+			name: 'Voltage',
 			type: 'float',
 			unit: 'V'
 		})
