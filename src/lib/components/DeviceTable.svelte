@@ -6,13 +6,13 @@
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
 	import * as Table from '$lib/components/ui/table/index.js';
-	import type { SelectDeviceWithProperties } from '$lib/server/devices/types';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import { goto } from '$app/navigation';
 	import Spinner from './Spinner.svelte';
+	import type { DeviceWithProperties } from '$lib/types/db';
 
 	type DeviceTableProps = {
-		devices: SelectDeviceWithProperties[];
+		devices: DeviceWithProperties[];
 		total: number;
 		page: number;
 		pageSize: number;
@@ -60,6 +60,7 @@
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
+							<Table.Head />
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head>
 									{#if !header.isPlaceholder}
@@ -76,6 +77,13 @@
 				<Table.Body>
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row data-state={row.getIsSelected() && 'selected'}>
+							<Table.Cell class="h-24 w-24 rounded">
+								<img
+									src={row.original.images[0]}
+									alt={row.original.name}
+									class="h-full w-full rounded object-cover"
+								/>
+							</Table.Cell>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell>
 									<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />

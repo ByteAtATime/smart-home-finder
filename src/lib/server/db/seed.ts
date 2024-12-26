@@ -14,7 +14,12 @@ async function main() {
 		.values({
 			name: 'Inovelli Smart Dimmer (Blue)',
 			deviceType: 'switch',
-			protocol: 'zigbee'
+			protocol: 'zigbee',
+			images: [
+				'https://inovelli.com/cdn/shop/files/Blue2-1-White_105d8571-c711-4ce3-9bea-a9eada21b052.jpg?v=1712609857&width=600',
+				'https://inovelli.com/cdn/shop/products/Inovelli2-1SwitchBlueSeriesHero-VZM31-SN.png?v=1712609857&width=600',
+				'https://inovelli.com/cdn/shop/products/Inovelli2-1SwitchBlueSeries-VZM31-SN.png?v=1712609857&width=600'
+			]
 		})
 		.returning();
 

@@ -2,10 +2,16 @@ import { devicesTable, devicePropertiesTable, propertiesTable } from '$lib/serve
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
-export const selectDeviceSchema = createSelectSchema(devicesTable);
+export const selectDeviceSchema = createSelectSchema(devicesTable, {
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date()
+});
 export const insertDeviceSchema = createInsertSchema(devicesTable);
 
-export const selectPropertySchema = createSelectSchema(propertiesTable);
+export const selectPropertySchema = createSelectSchema(propertiesTable, {
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date()
+});
 export const insertPropertySchema = createInsertSchema(propertiesTable);
 
 export const selectDevicePropertySchema = createSelectSchema(devicePropertiesTable);
@@ -16,8 +22,17 @@ export type Property = z.infer<typeof selectPropertySchema>;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type DeviceProperty = z.infer<typeof selectDevicePropertySchema>;
 
+const devicePropertyValueSchema = selectPropertySchema
+	.extend({
+		value: z.union([z.number(), z.number(), z.string(), z.boolean()])
+	})
+	.omit({
+		createdAt: true,
+		updatedAt: true
+	});
+
 export const deviceWithPropertiesSchema = selectDeviceSchema.extend({
-	properties: z.record(selectPropertySchema.merge(selectDevicePropertySchema))
+	properties: z.record(z.string(), devicePropertyValueSchema)
 });
 
 export type DeviceWithProperties = z.infer<typeof deviceWithPropertiesSchema>;

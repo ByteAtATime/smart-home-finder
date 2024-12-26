@@ -31,6 +31,7 @@ export const protocolEnum = pgEnum('protocol', ['zwave', 'zigbee', 'bluetooth', 
 export const devicesTable = pgTable('devices', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
+	images: text('images').array().default([]).notNull(),
 	deviceType: deviceTypeEnum('device_type').notNull(),
 	protocol: protocolEnum('protocol').notNull(),
 	createdAt: timestamp('created_at').defaultNow(),
