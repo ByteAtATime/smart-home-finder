@@ -3,11 +3,11 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
 	let { data } = $props();
-	const devices = $derived(data.devices.devices);
+	const { devices, total, pageSize, page } = $derived(data);
 
 	const properties = ['voltage'];
 </script>
 
 <ThemeToggle />
 
-<DeviceTable {devices} {properties} />
+<DeviceTable {devices} {total} {pageSize} {page} {properties} />
