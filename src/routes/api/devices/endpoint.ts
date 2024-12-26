@@ -2,21 +2,27 @@ import type { IAuthProvider } from '$lib/server/auth/types';
 import { insertDeviceSchema, type IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import { json } from '@sveltejs/kit';
-import type { z } from 'zod';
+import { z } from 'zod';
+
+export const querySchema = z.object({
+	page: z.number().min(1).optional().default(1),
+	pageSize: z.number().min(1).max(100).optional().default(10)
+});
 
 export const endpoint_GET: EndpointHandler<{
 	deviceRepository: IDeviceRepository;
-}> = async ({ deviceRepository }) => {
-	const devices = await deviceRepository.getAllDevices();
+	query: z.infer<typeof querySchema>;
+}> = async ({ deviceRepository, query }) => {
+	const devices = await deviceRepository.getAllDevicesPaginated(query.page, query.pageSize);
 
 	const devicesWithProperties = await Promise.all(
-		devices.map(async (device) => ({
+		devices.devices.map(async (device) => ({
 			...device,
 			properties: await deviceRepository.getDeviceProperties(device.id)
 		}))
 	);
 
-	return json({ success: true, devices: devicesWithProperties });
+	return json({ success: true, total: devices.total, devices: devicesWithProperties });
 };
 
 export const postBodySchema = insertDeviceSchema;

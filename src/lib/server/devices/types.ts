@@ -26,9 +26,16 @@ export type SelectDeviceWithProperties = SelectDeviceSchema & {
 };
 
 export interface IDeviceRepository {
+	getAllDevices(): Promise<SelectDeviceSchema[]>;
+	getAllDevicesPaginated(
+		page: number,
+		pageSize: number
+	): Promise<{
+		devices: SelectDeviceSchema[];
+		total: number;
+	}>;
 	getDeviceById(id: number): Promise<SelectDeviceSchema | null>;
 	addDeviceProperty(deviceId: number, propertyId: string, value: PropertyValue): Promise<string>;
 	getDeviceProperties(deviceId: number): Promise<DeviceProperties>;
 	insertDevice(device: InsertDeviceSchema): Promise<number>;
-	getAllDevices(): Promise<SelectDeviceSchema[]>;
 }

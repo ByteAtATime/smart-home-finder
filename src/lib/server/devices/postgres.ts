@@ -16,6 +16,18 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return devices;
 	}
 
+	async getAllDevicesPaginated(
+		page: number,
+		pageSize: number
+	): Promise<{ devices: SelectDeviceSchema[]; total: number }> {
+		const devices = await db.query.devicesTable.findMany({
+			offset: (page - 1) * pageSize,
+			limit: pageSize
+		});
+
+		return { devices, total: devices.length };
+	}
+
 	async addDeviceProperty(
 		deviceId: number,
 		propertyId: string,

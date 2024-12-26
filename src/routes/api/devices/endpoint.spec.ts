@@ -23,16 +23,26 @@ describe('devices', () => {
 	describe('GET', () => {
 		it('should return a list of devices', async () => {
 			const deviceRepository = new MockDeviceRepository();
-
-			deviceRepository.getAllDevices = vi.fn().mockResolvedValue([mockDevice]);
+			const query = { page: 1, pageSize: 10 };
+			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
+				devices: [mockDevice],
+				total: 1
+			});
 			deviceRepository.getDeviceProperties = vi.fn().mockResolvedValue(mockDeviceProperties);
 
-			const endpoint = await endpoint_GET({ deviceRepository });
+			const endpoint = await endpoint_GET({ deviceRepository, query });
 
-			expect(deviceRepository.getAllDevices).toHaveBeenCalled();
+			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
+				query.page,
+				query.pageSize
+			);
 			expect(endpoint.status).toBe(200);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
-			expect(await endpoint.json()).toEqual({ success: true, devices: [resultDevice] });
+			expect(await endpoint.json()).toEqual({
+				success: true,
+				devices: [resultDevice],
+				total: 1
+			});
 		});
 	});
 
