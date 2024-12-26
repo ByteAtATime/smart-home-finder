@@ -5,6 +5,7 @@ import type { Device, DeviceProperty } from '$lib/types/db';
 
 const mockDevice = {
 	id: 1,
+	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
 	name: 'Test Device',
 	deviceType: 'light',
 	protocol: 'zwave',

@@ -4,9 +4,12 @@ import { z } from 'zod';
 
 export const selectDeviceSchema = createSelectSchema(devicesTable, {
 	createdAt: z.coerce.date(),
-	updatedAt: z.coerce.date()
+	updatedAt: z.coerce.date(),
+	images: z.array(z.string())
 });
-export const insertDeviceSchema = createInsertSchema(devicesTable);
+export const insertDeviceSchema = createInsertSchema(devicesTable, {
+	images: z.array(z.string()).optional()
+});
 
 export const selectPropertySchema = createSelectSchema(propertiesTable, {
 	createdAt: z.coerce.date(),

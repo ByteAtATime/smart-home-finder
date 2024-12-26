@@ -10,7 +10,8 @@ const mockDevice = {
 	deviceType: 'light',
 	protocol: 'zwave',
 	createdAt: new Date(),
-	updatedAt: new Date()
+	updatedAt: new Date(),
+	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg']
 } satisfies Device;
 const mockDeviceProperties = {
 	voltage: {
