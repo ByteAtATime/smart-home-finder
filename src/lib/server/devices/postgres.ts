@@ -1,105 +1,111 @@
-import { count, eq, sql } from 'drizzle-orm';
-import type {
-	InsertDeviceSchema,
-	SelectDeviceSchema,
-	IDeviceRepository,
-	PropertyValue,
-	DeviceProperties
-} from './types';
-import { devicePropertiesTable, devicesTable, propertiesTable } from '../db/schema';
-import { db } from '../db';
+import { count, eq } from 'drizzle-orm';
+import type { Device, DeviceWithProperties, InsertDevice, PaginatedDevices } from '$lib/types/db';
+import {
+	devicePropertiesTable,
+	devicesTable,
+	propertiesTable,
+	propertyTypeEnum
+} from '$lib/server/db/schema';
+import { db } from '$lib/server/db';
+import type { IDeviceRepository } from './types';
 
 export class PostgresDeviceRepository implements IDeviceRepository {
-	async getAllDevices(): Promise<SelectDeviceSchema[]> {
-		const devices = await db.query.devicesTable.findMany();
-
-		return devices;
+	async getAllDevices(): Promise<Device[]> {
+		return await db.query.devicesTable.findMany();
 	}
 
-	async getAllDevicesPaginated(
-		page: number,
-		pageSize: number
-	): Promise<{ devices: SelectDeviceSchema[]; total: number }> {
+	async getAllDevicesPaginated(page: number, pageSize: number): Promise<PaginatedDevices> {
+		const offset = (page - 1) * pageSize;
+
 		const devices = await db.query.devicesTable.findMany({
-			offset: (page - 1) * pageSize,
+			offset,
 			limit: pageSize
 		});
-		const total = await db.select({ count: count() }).from(devicesTable).execute();
 
-		return { devices, total: total[0].count };
+		const totalResult = await db.select({ value: count() }).from(devicesTable);
+		const total = totalResult[0].value;
+
+		const devicesWithProperties = await Promise.all(
+			devices.map(async (device) => this.getDeviceWithProperties(device.id))
+		);
+
+		return {
+			devices: devicesWithProperties.filter((d): d is DeviceWithProperties => d !== null),
+			total,
+			page,
+			pageSize
+		};
 	}
 
-	async addDeviceProperty(
-		deviceId: number,
-		propertyId: string,
-		property: PropertyValue
-	): Promise<string> {
-		const [newProperty] = await db
-			.insert(devicePropertiesTable)
-			.values({
-				deviceId,
-				propertyId,
-				[`${property.type}Value`]: property.value
-			})
-			.returning();
-
-		return newProperty.propertyId;
+	async getDeviceById(id: number): Promise<Device | null> {
+		return (
+			(await db.query.devicesTable.findFirst({
+				where: eq(devicesTable.id, id)
+			})) ?? null
+		);
 	}
 
-	async getDeviceProperties(deviceId: number): Promise<DeviceProperties> {
-		const properties = await db
-			.select({
-				id: devicePropertiesTable.propertyId,
-				type: propertiesTable.type,
-				intValue: devicePropertiesTable.intValue,
-				floatValue: devicePropertiesTable.floatValue,
-				stringValue: devicePropertiesTable.stringValue,
-				booleanValue: devicePropertiesTable.booleanValue,
-				name: propertiesTable.name
-			})
-			.from(devicePropertiesTable)
-			.leftJoin(propertiesTable, eq(devicePropertiesTable.propertyId, propertiesTable.id))
-			.where(eq(devicePropertiesTable.deviceId, deviceId));
+	async insertDevice(device: InsertDevice): Promise<number> {
+		const result = await db
+			.insert(devicesTable)
+			.values(device)
+			.returning({ insertedId: devicesTable.id });
 
-		const deviceProperties: DeviceProperties = {};
-
-		for (const property of properties) {
-			if (!property.type) continue;
-
-			let propertyValue: PropertyValue;
-			if (property.intValue !== null) {
-				propertyValue = { type: 'int', value: property.intValue };
-			} else if (property.floatValue !== null) {
-				propertyValue = { type: 'float', value: property.floatValue };
-			} else if (property.stringValue !== null) {
-				propertyValue = { type: 'string', value: property.stringValue };
-			} else if (property.booleanValue !== null) {
-				propertyValue = { type: 'boolean', value: property.booleanValue };
-			} else {
-				continue;
-			}
-
-			deviceProperties[property.id] = { ...propertyValue, name: property.name! };
-		}
-
-		return deviceProperties;
-	}
-
-	async getDeviceById(id: number): Promise<SelectDeviceSchema | null> {
-		const device = await db.query.devicesTable.findFirst({
-			where: eq(devicesTable.id, id)
-		});
-
-		return device ?? null;
-	}
-
-	async insertDevice(device: InsertDeviceSchema): Promise<number> {
-		const [newDevice] = await db.insert(devicesTable).values(device).returning();
-
-		if (!newDevice) {
+		if (result.length === 0) {
 			throw new Error('Failed to insert device');
 		}
 
-		return newDevice.id;
+		return result[0].insertedId;
+	}
+
+	async getDeviceWithProperties(id: number): Promise<DeviceWithProperties | null> {
+		const device = await this.getDeviceById(id);
+		if (!device) return null;
+
+		const properties = await db
+			.select()
+			.from(propertiesTable)
+			.leftJoin(devicePropertiesTable, eq(propertiesTable.id, devicePropertiesTable.propertyId))
+			.where(eq(devicePropertiesTable.deviceId, id));
+
+		const deviceProperties: Record<string, any> = {};
+
+		for (const property of properties) {
+			const propertyId = property.device_properties!.propertyId;
+			const propertyType = property.properties.type;
+
+			if (!propertyType) continue;
+
+			const propertyValue = this.extractPropertyValue(property.device_properties!);
+
+			if (propertyValue === null) continue;
+
+			deviceProperties[propertyId] = {
+				id: propertyId,
+				name: property.properties.name,
+				type: propertyType,
+				unit: property.properties.unit,
+				description: property.properties.description,
+				value: propertyValue
+			};
+		}
+
+		return { ...device, properties: deviceProperties };
+	}
+
+	// Helper function to extract the correct value based on type
+	private extractPropertyValue(
+		property: typeof devicePropertiesTable.$inferSelect
+	): string | number | boolean | null {
+		if (property.intValue !== null) {
+			return property.intValue;
+		} else if (property.floatValue !== null) {
+			return property.floatValue;
+		} else if (property.stringValue !== null) {
+			return property.stringValue;
+		} else if (property.booleanValue !== null) {
+			return property.booleanValue;
+		}
+		return null;
 	}
 }

@@ -1,7 +1,7 @@
 import { MockDeviceRepository } from '$lib/server/devices/mock';
-import type { DeviceProperties, SelectDeviceSchema } from '$lib/server/devices/types';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET } from './endpoint';
+import type { Device, DeviceProperty } from '$lib/types/db';
 
 const mockDevice = {
 	id: 1,
@@ -10,10 +10,17 @@ const mockDevice = {
 	protocol: 'zwave',
 	createdAt: new Date(),
 	updatedAt: new Date()
-} satisfies SelectDeviceSchema;
+} satisfies Device;
 const mockDeviceProperties = {
-	voltage: { type: 'float', value: 123.45, name: 'Voltage' }
-} satisfies DeviceProperties;
+	voltage: {
+		deviceId: 1,
+		propertyId: 'voltage',
+		intValue: null,
+		floatValue: 123.45,
+		stringValue: null,
+		booleanValue: null
+	}
+} satisfies Record<string, DeviceProperty>;
 const resultDevice = JSON.parse(
 	JSON.stringify({ ...mockDevice, properties: mockDeviceProperties })
 );
@@ -23,13 +30,14 @@ describe('GET /api/devices/:id', () => {
 		const deviceRepository = new MockDeviceRepository();
 		const params = { id: '1' };
 
-		deviceRepository.getDeviceById = vi.fn().mockResolvedValue(mockDevice);
-		deviceRepository.getDeviceProperties = vi.fn().mockResolvedValue(mockDeviceProperties);
+		deviceRepository.getDeviceWithProperties = vi.fn().mockResolvedValue({
+			...mockDevice,
+			properties: mockDeviceProperties
+		});
 
 		const endpoint = await endpoint_GET({ deviceRepository, params });
 
-		expect(deviceRepository.getDeviceById).toHaveBeenCalledWith(1);
-		expect(deviceRepository.getDeviceProperties).toHaveBeenCalledWith(1);
+		expect(deviceRepository.getDeviceWithProperties).toHaveBeenCalledWith(1);
 		expect(endpoint.status).toBe(200);
 		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 		expect(await endpoint.json()).toEqual({

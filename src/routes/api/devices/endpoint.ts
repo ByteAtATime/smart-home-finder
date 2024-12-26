@@ -1,6 +1,7 @@
 import type { IAuthProvider } from '$lib/server/auth/types';
-import { insertDeviceSchema, type IDeviceRepository } from '$lib/server/devices/types';
+import { type IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
+import { insertDeviceSchema, type PaginatedDevices } from '$lib/types/db';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -13,18 +14,20 @@ export const endpoint_GET: EndpointHandler<{
 	deviceRepository: IDeviceRepository;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceRepository, query }) => {
-	const devices = await deviceRepository.getAllDevicesPaginated(query.page, query.pageSize);
+	const paginatedDevices: PaginatedDevices = await deviceRepository.getAllDevicesPaginated(
+		query.page,
+		query.pageSize
+	);
 
 	const devicesWithProperties = await Promise.all(
-		devices.devices.map(async (device) => ({
-			...device,
-			properties: await deviceRepository.getDeviceProperties(device.id)
-		}))
+		paginatedDevices.devices.map(async (device) =>
+			deviceRepository.getDeviceWithProperties(device.id)
+		)
 	);
 
 	return json({
 		success: true,
-		total: devices.total,
+		total: paginatedDevices.total,
 		pageSize: query.pageSize,
 		page: query.page,
 		devices: devicesWithProperties

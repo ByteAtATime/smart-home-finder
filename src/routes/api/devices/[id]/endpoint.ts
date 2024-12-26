@@ -14,11 +14,10 @@ export const endpoint_GET: EndpointHandler<{
 
 	const id = parseInt(params.id);
 
-	const device = await deviceRepository.getDeviceById(id);
-	const deviceProperties = await deviceRepository.getDeviceProperties(id);
+	const device = await deviceRepository.getDeviceWithProperties(id);
 
 	return json({
 		success: true,
-		device: { ...device, properties: deviceProperties }
+		device
 	});
 };
