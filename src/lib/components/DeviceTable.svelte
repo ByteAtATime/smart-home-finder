@@ -21,7 +21,9 @@
 	let spinnerPromise: Promise<unknown> | null = $state(null);
 
 	$effect(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- this makes it reactive
 		page;
+
 		isLoading = false;
 		spinnerPromise = null;
 	});

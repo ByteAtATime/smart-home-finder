@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { describe, it, vi, expect } from 'vitest';
 import { withBodySchema, withQuerySchema, withRouteParams } from './validation';
 import { z } from 'zod';

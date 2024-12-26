@@ -63,7 +63,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 			.leftJoin(devicePropertiesTable, eq(propertiesTable.id, devicePropertiesTable.propertyId))
 			.where(eq(devicePropertiesTable.deviceId, id));
 
-		const deviceProperties: Record<string, any> = {};
+		const deviceProperties: Record<string, DeviceWithProperties['properties'][number]> = {};
 
 		for (const property of properties) {
 			const propertyId = property.device_properties!.propertyId;
