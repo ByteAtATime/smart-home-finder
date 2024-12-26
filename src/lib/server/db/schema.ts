@@ -24,14 +24,14 @@ export const usersTable = pgTable('users', {
 });
 
 export const propertyTypeEnum = pgEnum('property_type', ['int', 'float', 'string', 'boolean']);
+export const deviceTypeEnum = pgEnum('device_type', ['light', 'switch', 'plug']);
+export const protocolEnum = pgEnum('protocol', ['zwave', 'zigbee', 'bluetooth', 'wifi']);
 
 export const devicesTable = pgTable('devices', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
-	deviceType: text('device_type').notNull(),
-	brand: text('brand').notNull(),
-	model: text('model').notNull(),
-	protocol: text('protocol').notNull(),
+	deviceType: deviceTypeEnum('device_type').notNull(),
+	protocol: protocolEnum('protocol').notNull(),
 	createdAt: timestamp('created_at').defaultNow(),
 	updatedAt: timestamp('updated_at').defaultNow()
 });
