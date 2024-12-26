@@ -51,13 +51,7 @@ describe('devices', () => {
 		it('should return 401 if the user is not an admin', async () => {
 			const deviceRepository = new MockDeviceRepository();
 			const authProvider = new MockAuthProvider().mockSignedIn();
-			const body = {
-				name: 'Test Device',
-				deviceType: 'test device type',
-				brand: 'test brand',
-				model: 'test model',
-				protocol: 'test protocol'
-			} satisfies InsertDeviceSchema;
+			const body = mockDevice;
 
 			const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
 
