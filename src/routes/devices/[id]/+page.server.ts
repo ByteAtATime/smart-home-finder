@@ -1,5 +1,4 @@
 import { currentPriceSchema, deviceWithPropertiesSchema } from '$lib/types/db';
-import { z } from 'zod';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
