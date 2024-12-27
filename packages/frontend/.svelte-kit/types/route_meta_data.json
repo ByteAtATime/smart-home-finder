@@ -1,0 +1,20 @@
+{
+	"/": [
+		"src/routes/+page.ts",
+		"src/routes/+layout.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/api/devices": [
+		"src/routes/api/devices/+server.ts"
+	],
+	"/api/devices/[id]": [
+		"src/routes/api/devices/[id]/+server.ts"
+	],
+	"/devices/[id]": [
+		"src/routes/devices/[id]/+page.server.ts",
+		"src/routes/+layout.server.ts"
+	],
+	"/login": [
+		"src/routes/+layout.server.ts"
+	]
+}

@@ -1,0 +1,28 @@
+{
+	"name": "@smart-home-finder/scraper",
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"update-prices": "tsx src/scrape.ts"
+	},
+	"typesVersions": {
+		"*": {
+			".": [
+				"./src/scrape.ts"
+			]
+		}
+	},
+	"files": [
+		"src"
+	],
+	"devDependencies": {
+		"@types/node": "^20.12.10",
+		"playwright": "^1.49.1",
+		"typescript": "^5.0.0"
+	},
+	"dependencies": {
+		"drizzle-orm": "^0.38.3",
+		"postgres": "^3.4.4",
+		"@smart-home-finder/common": "workspace:^"
+	}
+}
