@@ -2,7 +2,10 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET, endpoint_POST } from './endpoint';
-import type { Device, DeviceProperty } from '$lib/types/db';
+import type { Device, DeviceProperty, PaginatedDevices } from '$lib/types/db';
+import { DeviceService } from '$lib/server/devices/service';
+import { MockPropertyRepository } from '$lib/server/properties/mock';
+import { MockListingRepository } from '$lib/server/listings/mock';
 
 const mockDevice = {
 	id: 1,
@@ -31,27 +34,36 @@ describe('devices', () => {
 	describe('GET', () => {
 		it('should return a list of devices', async () => {
 			const deviceRepository = new MockDeviceRepository();
+			const propertyRepository = new MockPropertyRepository();
+			const listingRepository = new MockListingRepository();
+			const deviceService = new DeviceService(
+				deviceRepository,
+				propertyRepository,
+				listingRepository
+			);
+
 			const query = { page: 1, pageSize: 10 };
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
-				devices: [mockDevice],
-				total: 1
-			});
+				devices: [mockDevice], // Devices without properties at repository level
+				total: 1,
+				page: query.page,
+				pageSize: query.pageSize
+			} satisfies PaginatedDevices);
 
-			deviceRepository.getDeviceWithProperties = vi
-				.fn()
-				.mockResolvedValue({ ...mockDevice, properties: mockDeviceProperties });
+			propertyRepository.getPropertiesForDevice = vi.fn().mockResolvedValue(mockDeviceProperties);
 
-			const endpoint = await endpoint_GET({ deviceRepository, query });
+			const endpoint = await endpoint_GET({ deviceService, query });
 
 			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
 				query.page,
 				query.pageSize
 			);
+			expect(propertyRepository.getPropertiesForDevice).toHaveBeenCalledWith(mockDevice.id);
 			expect(endpoint.status).toBe(200);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 			expect(await endpoint.json()).toEqual({
 				success: true,
-				devices: [resultDevice],
+				devices: [resultDevice], // Devices with properties at service level
 				page: query.page,
 				pageSize: query.pageSize,
 				total: 1

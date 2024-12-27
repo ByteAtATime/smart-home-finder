@@ -1,5 +1,6 @@
 import type { IAuthProvider } from '$lib/server/auth/types';
-import { type IDeviceRepository } from '$lib/server/devices/types';
+import { type DeviceService } from '$lib/server/devices/service';
+import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import { insertDeviceSchema, type PaginatedDevices } from '$lib/types/db';
 import { json } from '@sveltejs/kit';
@@ -11,18 +12,12 @@ export const querySchema = z.object({
 });
 
 export const endpoint_GET: EndpointHandler<{
-	deviceRepository: IDeviceRepository;
+	deviceService: DeviceService;
 	query: z.infer<typeof querySchema>;
-}> = async ({ deviceRepository, query }) => {
-	const paginatedDevices: PaginatedDevices = await deviceRepository.getAllDevicesPaginated(
+}> = async ({ deviceService, query }) => {
+	const paginatedDevices: PaginatedDevices = await deviceService.getAllDevicesWithProperties(
 		query.page,
 		query.pageSize
-	);
-
-	const devicesWithProperties = await Promise.all(
-		paginatedDevices.devices.map(async (device) =>
-			deviceRepository.getDeviceWithProperties(device.id)
-		)
 	);
 
 	return json({
@@ -30,7 +25,7 @@ export const endpoint_GET: EndpointHandler<{
 		total: paginatedDevices.total,
 		pageSize: query.pageSize,
 		page: query.page,
-		devices: devicesWithProperties
+		devices: paginatedDevices.devices
 	});
 };
 

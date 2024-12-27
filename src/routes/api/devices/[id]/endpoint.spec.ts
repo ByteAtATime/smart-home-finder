@@ -2,6 +2,9 @@ import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET } from './endpoint';
 import type { Device, DeviceProperty } from '$lib/types/db';
+import { DeviceService } from '$lib/server/devices/service';
+import { MockPropertyRepository } from '$lib/server/properties/mock';
+import { MockListingRepository } from '$lib/server/listings/mock';
 
 const mockDevice = {
 	id: 1,
@@ -29,21 +32,28 @@ const resultDevice = JSON.parse(
 describe('GET /api/devices/:id', () => {
 	it('should return a device', async () => {
 		const deviceRepository = new MockDeviceRepository();
+		const propertyRepository = new MockPropertyRepository();
+		const listingRepository = new MockListingRepository();
+		const deviceService = new DeviceService(
+			deviceRepository,
+			propertyRepository,
+			listingRepository
+		);
+
 		const params = { id: '1' };
 
-		deviceRepository.getDeviceWithProperties = vi.fn().mockResolvedValue({
-			...mockDevice,
-			properties: mockDeviceProperties
-		});
+		deviceRepository.getDeviceById = vi.fn().mockResolvedValue(mockDevice);
+		propertyRepository.getPropertiesForDevice = vi.fn().mockResolvedValue(mockDeviceProperties);
+		listingRepository.getDevicePrices = vi.fn().mockResolvedValue([]);
 
-		const endpoint = await endpoint_GET({ deviceRepository, params });
+		const endpoint = await endpoint_GET({ deviceService, params });
 
-		expect(deviceRepository.getDeviceWithProperties).toHaveBeenCalledWith(1);
+		expect(deviceRepository.getDeviceById).toHaveBeenCalledWith(1);
 		expect(endpoint.status).toBe(200);
 		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 		expect(await endpoint.json()).toEqual({
 			success: true,
-			device: resultDevice
+			device: { ...resultDevice, prices: [] }
 		});
 	});
 });

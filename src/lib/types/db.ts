@@ -107,6 +107,13 @@ export type CurrentPrice = z.infer<typeof currentPriceSchema>;
 export type DeviceWithListings = z.infer<typeof deviceWithListingsSchema>;
 
 export type PaginatedDevices = {
+	devices: Device[];
+	total: number;
+	page: number;
+	pageSize: number;
+};
+
+export type PaginatedDevicesWithProperties = {
 	devices: DeviceWithProperties[];
 	total: number;
 	page: number;
