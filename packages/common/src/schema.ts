@@ -119,7 +119,8 @@ export const priceHistoryTable = pgTable(
 		inStock: boolean('in_stock').notNull().default(true),
 		validFrom: timestamp('valid_from').notNull().defaultNow(),
 		validTo: timestamp('valid_to'), // NULL means currently active
-		createdAt: timestamp('created_at').defaultNow()
+		createdAt: timestamp('created_at').defaultNow(),
+		updatedAt: timestamp('updated_at').defaultNow()
 	},
 	(table) => [
 		index('listing_idx').on(table.listingId),

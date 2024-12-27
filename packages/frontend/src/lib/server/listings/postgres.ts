@@ -34,7 +34,8 @@ export class PostgresListingRepository implements IListingRepository {
 				inStock: priceHistoryTable.inStock,
 				validFrom: priceHistoryTable.validFrom,
 				validTo: priceHistoryTable.validTo,
-				priceCreatedAt: priceHistoryTable.createdAt
+				priceCreatedAt: priceHistoryTable.createdAt,
+				priceUpdatedAt: priceHistoryTable.updatedAt
 			})
 			.from(deviceListingsTable)
 			.innerJoin(sellersTable, eq(deviceListingsTable.sellerId, sellersTable.id))

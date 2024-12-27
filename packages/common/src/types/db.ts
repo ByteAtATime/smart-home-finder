@@ -90,7 +90,8 @@ export const currentPriceSchema = z.object({
 	inStock: z.boolean(),
 	validFrom: z.coerce.date(),
 	validTo: z.coerce.date().nullable(),
-	priceCreatedAt: z.coerce.date()
+	priceCreatedAt: z.coerce.date(),
+	priceUpdatedAt: z.coerce.date()
 });
 
 export const deviceWithListingsSchema = selectDeviceSchema.extend({

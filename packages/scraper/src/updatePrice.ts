@@ -43,6 +43,10 @@ export async function updatePrice({
 			// Only update if the price or stock status has changed
 			if (currentPrice.price === price && currentPrice.inStock === inStock) {
 				console.log(`  └─ Already up to date`);
+				await tx
+					.update(priceHistoryTable)
+					.set({ updatedAt: now })
+					.where(eq(priceHistoryTable.id, currentPrice.id));
 				return currentPrice;
 			}
 
@@ -50,7 +54,8 @@ export async function updatePrice({
 			await tx
 				.update(priceHistoryTable)
 				.set({
-					validTo: now
+					validTo: now,
+					updatedAt: now
 				})
 				.where(eq(priceHistoryTable.id, currentPrice.id));
 		}

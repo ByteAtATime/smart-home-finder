@@ -66,7 +66,7 @@
 										<div class="text-muted-foreground flex items-center gap-2 text-sm">
 											<span>{price.inStock ? 'In Stock' : 'Out of Stock'}</span>
 											<span>•</span>
-											<span>Updated {relativeTime(price.priceCreatedAt)}</span>
+											<span>Updated {relativeTime(price.priceUpdatedAt)}</span>
 										</div>
 									</div>
 									<div class="flex items-center gap-3">
