@@ -7,4 +7,6 @@ export class MockDeviceRepository implements IDeviceRepository {
 	insertDevice = vi.fn();
 	getDeviceWithProperties = vi.fn();
 	getAllDevicesPaginated = vi.fn();
+	getDeviceListings = vi.fn();
+	getDevicePrices = vi.fn();
 }

@@ -11,6 +11,7 @@ import {
 	serial,
 	text,
 	timestamp,
+	unique,
 	uuid,
 	varchar
 } from 'drizzle-orm/pg-core';
@@ -62,12 +63,11 @@ export const devicePropertiesTable = pgTable(
 		stringValue: text('string_value'),
 		booleanValue: boolean('boolean_value')
 	},
-	(table) => ({
-		pk: primaryKey({ columns: [table.deviceId, table.propertyId] }),
-		deviceIdx: index('device_idx').on(table.deviceId),
-		propertyIdx: index('property_idx').on(table.propertyId),
-		// Ensure only one value type is set
-		valueCheck: check(
+	(table) => [
+		primaryKey({ columns: [table.deviceId, table.propertyId] }),
+		index('device_idx').on(table.deviceId),
+		index('property_idx').on(table.propertyId),
+		check(
 			'value_check',
 			sql`(
                 CASE WHEN int_value IS NOT NULL THEN 1 ELSE 0 END +
@@ -76,5 +76,54 @@ export const devicePropertiesTable = pgTable(
                 CASE WHEN boolean_value IS NOT NULL THEN 1 ELSE 0 END
             ) = 1`
 		)
+	]
+);
+
+export const sellersTable = pgTable('sellers', {
+	id: serial('id').primaryKey(),
+	name: text('name').notNull(),
+	website: text('website'),
+	createdAt: timestamp('created_at').defaultNow(),
+	updatedAt: timestamp('updated_at').defaultNow()
+});
+
+export const deviceListingsTable = pgTable(
+	'device_listings',
+	{
+		id: serial('id').primaryKey(),
+		deviceId: integer('device_id')
+			.references(() => devicesTable.id)
+			.notNull(),
+		sellerId: integer('seller_id')
+			.references(() => sellersTable.id)
+			.notNull(),
+		url: text('url').notNull(),
+		isActive: boolean('is_active').notNull().default(true),
+		createdAt: timestamp('created_at').defaultNow(),
+		updatedAt: timestamp('updated_at').defaultNow()
+	},
+	(table) => ({
+		uniqueListing: unique('unique_listing').on(table.deviceId, table.sellerId),
+		deviceSellerIdx: index('device_seller_idx').on(table.deviceId, table.sellerId)
 	})
+);
+
+export const priceHistoryTable = pgTable(
+	'price_history',
+	{
+		id: serial('id').primaryKey(),
+		listingId: integer('listing_id')
+			.references(() => deviceListingsTable.id)
+			.notNull(),
+		price: real('price').notNull(),
+		inStock: boolean('in_stock').notNull().default(true),
+		validFrom: timestamp('valid_from').notNull().defaultNow(),
+		validTo: timestamp('valid_to'), // NULL means currently active
+		createdAt: timestamp('created_at').defaultNow()
+	},
+	(table) => [
+		index('listing_idx').on(table.listingId),
+		index('valid_from_idx').on(table.validFrom),
+		index('valid_to_idx').on(table.validTo)
+	]
 );

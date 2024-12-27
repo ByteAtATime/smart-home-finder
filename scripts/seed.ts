@@ -1,10 +1,8 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from './schema';
 import { reset } from 'drizzle-seed';
+import { db } from './db';
 
 async function main() {
-	const db = drizzle(process.env.DATABASE_URL!);
-
 	console.log('Resetting database');
 	await reset(db, schema);
 
@@ -39,6 +37,22 @@ async function main() {
 		deviceId: device.id,
 		propertyId: property.id,
 		floatValue: 120
+	});
+
+	console.log('Inserting seller');
+	const [seller] = await db
+		.insert(schema.sellersTable)
+		.values({
+			name: 'Inovelli',
+			website: 'https://inovelli.com'
+		})
+		.returning();
+
+	console.log('Inserting device listing');
+	await db.insert(schema.deviceListingsTable).values({
+		deviceId: device.id,
+		sellerId: seller.id,
+		url: 'https://inovelli.com/collections/inovelli-blue-series/products/zigbee-matter-blue-series-smart-2-1-on-off-dimmer-switch'
 	});
 
 	console.log('Done');
