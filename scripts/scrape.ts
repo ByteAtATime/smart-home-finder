@@ -23,6 +23,8 @@ for (const listing of deviceListings) {
 	await page.goto(listing.url);
 	const price = await scraper(page);
 
+	console.log(`Found price ${price} for ${listing.url}`);
+
 	await updatePrice({
 		listingId: listing.id,
 		price,

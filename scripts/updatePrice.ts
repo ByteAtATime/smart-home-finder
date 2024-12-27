@@ -38,6 +38,7 @@ export async function updatePrice({
 		if (currentPrice) {
 			// Only update if the price or stock status has changed
 			if (currentPrice.price === price && currentPrice.inStock === inStock) {
+				console.log(`  └─ Already up to date`);
 				return currentPrice;
 			}
 
@@ -60,6 +61,8 @@ export async function updatePrice({
 		};
 
 		const [newPriceRecord] = await tx.insert(priceHistoryTable).values(newPriceData).returning();
+
+		console.log(`  └─ Updated price`);
 
 		return newPriceRecord as PriceHistory;
 	});
