@@ -50,11 +50,6 @@
 						</Carousel.Item>
 					{/each}
 				</Carousel.Content>
-				<!-- <div class="flex w-full justify-center gap-2 py-2">
-					{#each device.images as _, i}
-						<Carousel. index={i} />
-					{/each}
-				</div> -->
 				<Carousel.Previous class="left-0" />
 				<Carousel.Next class="right-0" />
 			</Carousel.Root>
