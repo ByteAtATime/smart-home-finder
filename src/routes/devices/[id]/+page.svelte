@@ -50,6 +50,11 @@
 						</Carousel.Item>
 					{/each}
 				</Carousel.Content>
+				<!-- <div class="flex w-full justify-center gap-2 py-2">
+					{#each device.images as _, i}
+						<Carousel. index={i} />
+					{/each}
+				</div> -->
 				<Carousel.Previous class="left-0" />
 				<Carousel.Next class="right-0" />
 			</Carousel.Root>
@@ -92,7 +97,7 @@
 
 			<div class="w-full space-y-4">
 				<h2 class="text-xl font-semibold">Properties</h2>
-				<div class="grid grid-cols-2 gap-4">
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 					{#each Object.entries(device.properties) as [_, prop]}
 						<div class="rounded-lg bg-secondary/20 p-4">
 							<div class="text-sm text-muted-foreground">{prop.name}</div>
@@ -105,10 +110,14 @@
 				</div>
 			</div>
 
-			<div class="flex flex-col items-center text-sm text-muted-foreground">
-				<div>Created: {device.createdAt?.toLocaleDateString()}</div>
-				<div>Last Updated: {device.updatedAt?.toLocaleDateString()}</div>
-			</div>
+			<footer class="mt-4 flex flex-col items-center gap-1 text-sm text-muted-foreground">
+				<time datetime={device.createdAt?.toISOString()}>
+					Created: {device.createdAt?.toLocaleDateString()}
+				</time>
+				<time datetime={device.updatedAt?.toISOString()}>
+					Last Updated: {device.updatedAt?.toLocaleDateString()}
+				</time>
+			</footer>
 		</Card.Content>
 	</Card.Root>
 </div>
