@@ -4,8 +4,10 @@ import {
 	propertiesTable,
 	sellersTable,
 	deviceListingsTable,
-	priceHistoryTable
-} from '@smart-home-finder/common/schema';
+	priceHistoryTable,
+	variantsTable,
+	variantOptionsTable
+} from '../schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
 
@@ -17,6 +19,18 @@ export const selectDeviceSchema = createSelectSchema(devicesTable, {
 export const insertDeviceSchema = createInsertSchema(devicesTable, {
 	images: z.array(z.string()).optional()
 });
+
+export const selectVariantSchema = createSelectSchema(variantsTable, {
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date()
+});
+export const insertVariantSchema = createInsertSchema(variantsTable);
+
+export const selectVariantOptionSchema = createSelectSchema(variantOptionsTable, {
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date()
+});
+export const insertVariantOptionSchema = createInsertSchema(variantOptionsTable);
 
 export const selectPropertySchema = createSelectSchema(propertiesTable, {
 	createdAt: z.coerce.date(),
@@ -59,6 +73,16 @@ export type DeviceListing = z.infer<typeof selectDeviceListingSchema>;
 export type InsertDeviceListing = z.infer<typeof insertDeviceListingSchema>;
 export type PriceHistory = z.infer<typeof selectPriceHistorySchema>;
 export type InsertPriceHistory = z.infer<typeof insertPriceHistorySchema>;
+export type Variant = z.infer<typeof selectVariantSchema>;
+export type InsertVariant = z.infer<typeof insertVariantSchema>;
+export type VariantOption = z.infer<typeof selectVariantOptionSchema>;
+export type InsertVariantOption = z.infer<typeof insertVariantOptionSchema>;
+
+export const variantWithOptionsSchema = selectVariantSchema.extend({
+	options: selectVariantOptionSchema.array()
+});
+
+export type VariantWithOptions = z.infer<typeof variantWithOptionsSchema>;
 
 const devicePropertyValueSchema = selectPropertySchema
 	.extend({
@@ -70,7 +94,8 @@ const devicePropertyValueSchema = selectPropertySchema
 	});
 
 export const deviceWithPropertiesSchema = selectDeviceSchema.extend({
-	properties: z.record(z.string(), devicePropertyValueSchema)
+	properties: z.record(z.string(), devicePropertyValueSchema),
+	variants: z.array(variantWithOptionsSchema)
 });
 
 export const currentPriceSchema = z.object({

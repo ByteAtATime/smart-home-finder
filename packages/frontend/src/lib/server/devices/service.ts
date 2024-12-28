@@ -1,7 +1,4 @@
-import type {
-	DeviceWithProperties,
-	PaginatedDevicesWithProperties
-} from '@smart-home-finder/common/types';
+import type { DeviceWithProperties, PaginatedDevices } from '@smart-home-finder/common/types';
 import type { IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
@@ -13,30 +10,31 @@ export class DeviceService {
 		private listingRepository: IListingRepository
 	) {}
 
-	async getDeviceWithPropertiesAndPrices(
-		id: number
-	): Promise<(DeviceWithProperties & { prices: unknown }) | null> {
+	async getDeviceWithVariantsAndProperties(id: number): Promise<DeviceWithProperties | null> {
 		const device = await this.deviceRepository.getDeviceById(id);
 		if (!device) return null;
 
 		const properties = await this.propertyRepository.getPropertiesForDevice(id);
 		const prices = await this.listingRepository.getDevicePrices(id);
 
-		return { ...device, properties, prices };
+		const variants = await this.deviceRepository.getVariantsForDevice(id);
+
+		return { ...device, variants, properties, prices };
 	}
 
-	async getAllDevicesWithProperties(
+	async getAllDevicesWithVariantsAndProperties(
 		page: number,
 		pageSize: number
-	): Promise<PaginatedDevicesWithProperties> {
+	): Promise<PaginatedDevices> {
 		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(page, pageSize);
-		const devicesWithProperties = await Promise.all(
+		const devicesWithVariantsAndProperties = await Promise.all(
 			paginatedDevices.devices.map(async (device) => {
+				const variants = await this.deviceRepository.getVariantsForDevice(device.id);
 				const properties = await this.propertyRepository.getPropertiesForDevice(device.id);
-				return { ...device, properties };
+				return { ...device, variants, properties };
 			})
 		);
 
-		return { ...paginatedDevices, devices: devicesWithProperties };
+		return { ...paginatedDevices, devices: devicesWithVariantsAndProperties };
 	}
 }

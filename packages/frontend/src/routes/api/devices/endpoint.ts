@@ -15,10 +15,8 @@ export const endpoint_GET: EndpointHandler<{
 	deviceService: DeviceService;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, query }) => {
-	const paginatedDevices: PaginatedDevices = await deviceService.getAllDevicesWithProperties(
-		query.page,
-		query.pageSize
-	);
+	const paginatedDevices: PaginatedDevices =
+		await deviceService.getAllDevicesWithVariantsAndProperties(query.page, query.pageSize);
 
 	return json({
 		success: true,

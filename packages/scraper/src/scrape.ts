@@ -5,7 +5,7 @@ import { db } from './db';
 import { deviceListingsTable } from '@smart-home-finder/common/schema';
 import { updatePrice } from './updatePrice';
 
-const sellerToScraper: Map<number, Scraper> = new Map([[1, inovelliScraper]]);
+const sellerToScraper: Map<number, Scraper> = new Map([[4, inovelliScraper]]);
 
 async function main() {
 	const deviceListings = await db.select().from(deviceListingsTable);

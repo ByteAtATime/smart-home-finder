@@ -55,6 +55,20 @@
 			</Carousel.Root>
 
 			<div class="w-full space-y-4">
+				<h2 class="text-xl font-semibold">Variants</h2>
+				{#each device.variants as variant}
+					<div class="flex items-center gap-2">
+						{variant.name}:
+						{#each variant.options as option}
+							<Button variant="outline" size="sm" href={`/devices/${device.id}`}>
+								{option.value}
+							</Button>
+						{/each}
+					</div>
+				{/each}
+			</div>
+
+			<div class="w-full space-y-4">
 				<h2 class="text-xl font-semibold">Prices</h2>
 				<div class="grid gap-4">
 					{#each device.prices as price}

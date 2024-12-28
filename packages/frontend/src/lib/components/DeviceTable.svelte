@@ -28,17 +28,19 @@
 		spinnerPromise = null;
 	});
 
-	const propertyColumns = properties.map((property) => ({
-		header: devices[0].properties[property].name, // TODO: is this the best approach?
-		accessorKey: `properties.${property}.value`
-	}));
-
 	const columns = [
 		{
 			header: 'Name',
 			accessorKey: 'name'
 		},
-		...propertyColumns
+		{
+			header: 'Device Type',
+			accessorKey: 'deviceType'
+		},
+		{
+			header: 'Protocol',
+			accessorKey: 'protocol'
+		}
 	];
 
 	const table = createSvelteTable({
@@ -76,11 +78,13 @@
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							<Table.Cell class="h-24 w-24 rounded">
-								<img
-									src={row.original.images[0]}
-									alt={row.original.name}
-									class="h-full w-full rounded object-cover"
-								/>
+								{#if row.original.images && row.original.images[0]}
+									<img
+										src={row.original.images[0]}
+										alt={row.original.name}
+										class="h-full w-full rounded object-cover"
+									/>
+								{/if}
 							</Table.Cell>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell>
@@ -104,7 +108,7 @@
 				{page}
 				onPageChange={(p) => {
 					isLoading = true;
-					spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125)); // wait to show spinner, in case the page loads quickly
+					spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125));
 					goto(`?page=${p}&pageSize=${pageSize}`);
 				}}
 			>

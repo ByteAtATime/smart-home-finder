@@ -35,8 +35,31 @@ export const devicesTable = pgTable('devices', {
 	images: text('images').array().default([]).notNull(),
 	deviceType: deviceTypeEnum('device_type').notNull(),
 	protocol: protocolEnum('protocol').notNull(),
-	createdAt: timestamp('created_at').defaultNow(),
-	updatedAt: timestamp('updated_at').defaultNow()
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
+export const variantsTable = pgTable('variants', {
+	id: serial('id').primaryKey(),
+	deviceId: integer('device_id')
+		.references(() => devicesTable.id)
+		.notNull(),
+	name: text('name').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
+export const variantOptionsTable = pgTable('variant_options', {
+	id: serial('id').primaryKey(),
+	variantId: integer('variant_id')
+		.references(() => variantsTable.id)
+		.notNull(),
+	deviceId: integer('device_id')
+		.references(() => devicesTable.id)
+		.notNull(),
+	value: text('value').notNull(),
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
 export const propertiesTable = pgTable('properties', {
@@ -45,8 +68,8 @@ export const propertiesTable = pgTable('properties', {
 	type: propertyTypeEnum('type').notNull(),
 	unit: text('unit'),
 	description: text('description'),
-	createdAt: timestamp('created_at').defaultNow(),
-	updatedAt: timestamp('updated_at').defaultNow()
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
 export const devicePropertiesTable = pgTable(
@@ -83,8 +106,8 @@ export const sellersTable = pgTable('sellers', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
 	website: text('website'),
-	createdAt: timestamp('created_at').defaultNow(),
-	updatedAt: timestamp('updated_at').defaultNow()
+	createdAt: timestamp('created_at').notNull().defaultNow(),
+	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
 export const deviceListingsTable = pgTable(
@@ -99,8 +122,8 @@ export const deviceListingsTable = pgTable(
 			.notNull(),
 		url: text('url').notNull(),
 		isActive: boolean('is_active').notNull().default(true),
-		createdAt: timestamp('created_at').defaultNow(),
-		updatedAt: timestamp('updated_at').defaultNow()
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
 	(table) => ({
 		uniqueListing: unique('unique_listing').on(table.deviceId, table.sellerId),
@@ -119,8 +142,8 @@ export const priceHistoryTable = pgTable(
 		inStock: boolean('in_stock').notNull().default(true),
 		validFrom: timestamp('valid_from').notNull().defaultNow(),
 		validTo: timestamp('valid_to'), // NULL means currently active
-		createdAt: timestamp('created_at').defaultNow(),
-		updatedAt: timestamp('updated_at').defaultNow()
+		createdAt: timestamp('created_at').notNull().defaultNow(),
+		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
 	(table) => [
 		index('listing_idx').on(table.listingId),
