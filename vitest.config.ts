@@ -5,7 +5,10 @@ export default defineConfig({
 	test: {
 		globals: true,
 		environment: 'node',
-		include: ['packages/*/src/**/*.{test,spec}.{js,ts}']
+		include: ['packages/*/src/**/*.{test,spec}.{js,ts}'],
+		alias: {
+			'$env/dynamic/private': path.resolve('./packages/frontend/test/__mocks__/env.ts')
+		}
 	},
 	resolve: {
 		alias: {

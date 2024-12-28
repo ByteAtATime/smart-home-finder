@@ -1,9 +1,11 @@
 import { count, eq } from 'drizzle-orm';
-import type {
-	Device,
-	InsertDevice,
-	PaginatedDevices,
-	VariantWithOptions
+import {
+	selectDeviceSchema,
+	variantWithOptionsSchema,
+	type Device,
+	type InsertDevice,
+	type PaginatedDevices,
+	type VariantWithOptions
 } from '@smart-home-finder/common/types';
 import { devicesTable, variantOptionsTable, variantsTable } from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
@@ -34,11 +36,12 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	}
 
 	async getDeviceById(id: number): Promise<Device | null> {
-		return (
+		const device =
 			(await db.query.devicesTable.findFirst({
 				where: eq(devicesTable.id, id)
-			})) ?? null
-		);
+			})) ?? null;
+
+		return selectDeviceSchema.nullable().parse(device);
 	}
 
 	async insertDevice(device: InsertDevice): Promise<number> {
@@ -75,16 +78,16 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				acc[variant.id].options?.push({
 					id: variant.optionId!,
 					value: variant.optionValue!,
-					variantId: variant.id,
-					createdAt: variant.createdAt,
-					updatedAt: variant.updatedAt,
-					deviceId: variant.deviceId
+					createdAt: variant.createdAt!,
+					updatedAt: variant.updatedAt!,
+					deviceId: variant.deviceId!,
+					variantId: variant.id!
 				});
 				return acc;
 			},
 			{} as Record<number, VariantWithOptions>
 		);
 
-		return Object.values(aggregatedVariants);
+		return variantWithOptionsSchema.array().parse(Object.values(aggregatedVariants));
 	}
 }
