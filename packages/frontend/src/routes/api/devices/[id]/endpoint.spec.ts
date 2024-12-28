@@ -1,10 +1,11 @@
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
-import { endpoint_GET } from './endpoint';
+import { endpoint_DELETE, endpoint_GET, endpoint_PATCH } from './endpoint';
 import type { Device, DeviceProperty } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
+import { MockAuthProvider } from '$lib/server/auth/mock';
 
 const mockDevice = {
 	id: 1,
@@ -55,5 +56,119 @@ describe('GET /api/devices/:id', () => {
 			success: true,
 			device: { ...resultDevice, prices: [] }
 		});
+	});
+});
+
+describe('PATCH /api/devices/:id', () => {
+	it('should update a device', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: '1' };
+		const body = { name: 'Updated Device Name' };
+
+		const updatedDevice = { ...mockDevice, ...body };
+		deviceRepository.updateDevice.mockResolvedValue(updatedDevice);
+
+		const endpoint = await endpoint_PATCH({ authProvider, deviceRepository, params, body });
+
+		expect(deviceRepository.updateDevice).toHaveBeenCalledWith(1, body);
+		expect(endpoint.status).toBe(200);
+		expect(await endpoint.json()).toEqual({
+			success: true,
+			device: JSON.parse(JSON.stringify(updatedDevice))
+		});
+	});
+
+	it('should return 401 if the user is not an admin', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockSignedIn(); // Not an admin
+		const params = { id: '1' };
+		const body = { name: 'Updated Device Name' };
+
+		const endpoint = await endpoint_PATCH({ authProvider, deviceRepository, params, body });
+
+		expect(deviceRepository.updateDevice).not.toHaveBeenCalled();
+		expect(endpoint.status).toBe(401);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Unauthorized' });
+	});
+
+	it('should return 400 if the ID is not a number', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: 'abc' };
+		const body = { name: 'Updated Device Name' };
+
+		const endpoint = await endpoint_PATCH({ authProvider, deviceRepository, params, body });
+
+		expect(endpoint.status).toBe(400);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Invalid device ID' });
+	});
+
+	it('should return 404 if the device is not found', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: '1' };
+		const body = { name: 'Updated Device Name' };
+
+		deviceRepository.updateDevice.mockResolvedValue(null);
+
+		const endpoint = await endpoint_PATCH({ authProvider, deviceRepository, params, body });
+
+		expect(deviceRepository.updateDevice).toHaveBeenCalledWith(1, body);
+		expect(endpoint.status).toBe(404);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Device not found' });
+	});
+});
+
+describe('DELETE /api/devices/:id', () => {
+	it('should delete a device', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: '1' };
+
+		deviceRepository.deleteDevice.mockResolvedValue(true);
+
+		const endpoint = await endpoint_DELETE({ authProvider, deviceRepository, params });
+
+		expect(deviceRepository.deleteDevice).toHaveBeenCalledWith(1);
+		expect(endpoint.status).toBe(200);
+		expect(await endpoint.json()).toEqual({ success: true });
+	});
+
+	it('should return 401 if the user is not an admin', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockSignedIn(); // Not an admin
+		const params = { id: '1' };
+
+		const endpoint = await endpoint_DELETE({ authProvider, deviceRepository, params });
+
+		expect(deviceRepository.deleteDevice).not.toHaveBeenCalled();
+		expect(endpoint.status).toBe(401);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Unauthorized' });
+	});
+
+	it('should return 400 if the ID is not a number', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: 'abc' };
+
+		const endpoint = await endpoint_DELETE({ authProvider, deviceRepository, params });
+
+		expect(endpoint.status).toBe(400);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Invalid device ID' });
+	});
+
+	it('should return 404 if the device is not found', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const authProvider = new MockAuthProvider().mockAdmin();
+		const params = { id: '1' };
+
+		deviceRepository.deleteDevice.mockResolvedValue(false);
+
+		const endpoint = await endpoint_DELETE({ authProvider, deviceRepository, params });
+
+		expect(deviceRepository.deleteDevice).toHaveBeenCalledWith(1);
+		expect(endpoint.status).toBe(404);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Device not found' });
 	});
 });

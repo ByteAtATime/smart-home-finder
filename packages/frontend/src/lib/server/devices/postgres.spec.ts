@@ -18,7 +18,10 @@ vi.mock('$lib/server/db', () => ({
 		values: vi.fn().mockReturnThis(),
 		returning: vi.fn().mockReturnThis(),
 		leftJoin: vi.fn().mockReturnThis(),
-		where: vi.fn().mockReturnThis()
+		where: vi.fn().mockReturnThis(),
+		offset: vi.fn().mockReturnThis(),
+		limit: vi.fn().mockReturnThis(),
+		execute: vi.fn()
 	}
 }));
 
@@ -45,18 +48,17 @@ describe('PostgresDeviceRepository', () => {
 	it('should get all devices paginated', async () => {
 		const mockDevices = [{ id: 1, name: 'Device 1' }];
 		const mockTotal = [{ value: 1 }];
-		db.query.devicesTable.findMany.mockResolvedValue(mockDevices);
-		db.select().from.mockResolvedValue(mockTotal);
+
+		db.select().from().execute.mockResolvedValue(mockTotal);
+		db.select().from().offset().limit.mockResolvedValue(mockDevices);
 
 		const page = 1;
 		const pageSize = 10;
 		const result = await repository.getAllDevicesPaginated(page, pageSize);
 
-		expect(db.query.devicesTable.findMany).toHaveBeenCalledWith({
-			offset: 0,
-			limit: pageSize
-		});
-		expect(db.select).toHaveBeenCalled();
+		expect(db.select().from().offset).toHaveBeenCalledWith(0);
+		expect(db.select().from().limit).toHaveBeenCalledWith(pageSize);
+		expect(db.select().from().execute).toHaveBeenCalled();
 		expect(result).toEqual({
 			devices: mockDevices,
 			total: mockTotal[0].value,

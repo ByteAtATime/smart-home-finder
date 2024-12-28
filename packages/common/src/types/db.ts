@@ -20,6 +20,12 @@ export const insertDeviceSchema = createInsertSchema(devicesTable, {
 	images: z.array(z.string()).optional()
 });
 
+export const updateDeviceSchema = createInsertSchema(devicesTable, {
+	images: z.array(z.string()).optional()
+})
+	.partial()
+	.omit({ id: true, createdAt: true });
+
 export const selectVariantSchema = createSelectSchema(variantsTable, {
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date()
@@ -37,6 +43,11 @@ export const selectPropertySchema = createSelectSchema(propertiesTable, {
 	updatedAt: z.coerce.date()
 });
 export const insertPropertySchema = createInsertSchema(propertiesTable);
+export const updatePropertySchema = createInsertSchema(propertiesTable).partial().omit({
+	id: true,
+	createdAt: true,
+	updatedAt: true
+});
 
 export const selectDevicePropertySchema = createSelectSchema(devicePropertiesTable);
 
@@ -64,8 +75,10 @@ export const insertPriceHistorySchema = createInsertSchema(priceHistoryTable, {
 
 export type Device = z.infer<typeof selectDeviceSchema>;
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
+export type UpdateDevice = z.infer<typeof updateDeviceSchema>;
 export type Property = z.infer<typeof selectPropertySchema>;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
+export type UpdateProperty = z.infer<typeof updatePropertySchema>;
 export type DeviceProperty = z.infer<typeof selectDevicePropertySchema>;
 export type Seller = z.infer<typeof selectSellerSchema>;
 export type InsertSeller = z.infer<typeof insertSellerSchema>;

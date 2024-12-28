@@ -1,10 +1,11 @@
-import { count, eq } from 'drizzle-orm';
+import { count, eq, and, sql } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	variantWithOptionsSchema,
 	type Device,
 	type InsertDevice,
 	type PaginatedDevices,
+	type UpdateDevice,
 	type VariantWithOptions
 } from '@smart-home-finder/common/types';
 import { devicesTable, variantOptionsTable, variantsTable } from '@smart-home-finder/common/schema';
@@ -16,15 +17,30 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return await db.query.devicesTable.findMany();
 	}
 
-	async getAllDevicesPaginated(page: number, pageSize: number): Promise<PaginatedDevices> {
+	async getAllDevicesPaginated(
+		page: number,
+		pageSize: number,
+		filters: { deviceType?: string; protocol?: string } = {}
+	): Promise<PaginatedDevices> {
 		const offset = (page - 1) * pageSize;
 
-		const devices = await db.query.devicesTable.findMany({
-			offset,
-			limit: pageSize
-		});
+		const query = db.select().from(devicesTable).offset(offset).limit(pageSize);
 
-		const totalResult = await db.select({ value: count() }).from(devicesTable);
+		const whereConditions = [];
+		if (filters.deviceType) {
+			whereConditions.push(eq(devicesTable.deviceType, filters.deviceType));
+		}
+		if (filters.protocol) {
+			whereConditions.push(eq(devicesTable.protocol, filters.protocol));
+		}
+
+		if (whereConditions.length > 0) {
+			query.where(and(...whereConditions));
+		}
+
+		const devices = await query;
+
+		const totalResult = await db.select({ value: count() }).from(devicesTable).execute();
 		const total = totalResult[0].value;
 
 		return {
@@ -33,6 +49,11 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 			page,
 			pageSize
 		};
+	}
+
+	async deleteDevice(id: number): Promise<boolean> {
+		const result = await db.delete(devicesTable).where(eq(devicesTable.id, id));
+		return result.length > 0;
 	}
 
 	async getDeviceById(id: number): Promise<Device | null> {
@@ -55,6 +76,20 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		}
 
 		return result[0].insertedId;
+	}
+
+	async updateDevice(id: number, device: UpdateDevice): Promise<Device | null> {
+		const result = await db
+			.update(devicesTable)
+			.set({ ...device, updatedAt: sql`CURRENT_TIMESTAMP` })
+			.where(eq(devicesTable.id, id))
+			.returning();
+
+		if (result.length === 0) {
+			return null;
+		}
+
+		return selectDeviceSchema.parse(result[0]);
 	}
 
 	async getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]> {

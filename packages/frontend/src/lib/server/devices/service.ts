@@ -27,9 +27,14 @@ export class DeviceService {
 
 	async getAllDevicesWithVariantsAndProperties(
 		page: number,
-		pageSize: number
+		pageSize: number,
+		filters: { deviceType?: string; protocol?: string } = {}
 	): Promise<PaginatedDevicesWithDetails> {
-		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(page, pageSize);
+		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(
+			page,
+			pageSize,
+			filters
+		);
 		const devicesWithVariantsAndProperties = await Promise.all(
 			paginatedDevices.devices.map(async (device) => {
 				const variants = await this.deviceRepository.getVariantsForDevice(device.id);

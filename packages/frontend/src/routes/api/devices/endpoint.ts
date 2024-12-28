@@ -2,6 +2,7 @@ import type { IAuthProvider } from '$lib/server/auth/types';
 import { type DeviceService } from '$lib/server/devices/service';
 import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
+import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
 import {
 	insertDeviceSchema,
 	type PaginatedDevicesWithDetails
@@ -11,21 +12,28 @@ import { z } from 'zod';
 
 export const querySchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
-	pageSize: z.coerce.number().min(1).max(100).optional().default(10)
+	pageSize: z.coerce.number().min(1).max(100).optional().default(10),
+	deviceType: z.enum(deviceTypeEnum.enumValues).optional(),
+	protocol: z.enum(protocolEnum.enumValues).optional()
 });
 
 export const endpoint_GET: EndpointHandler<{
 	deviceService: DeviceService;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, query }) => {
+	const { page, pageSize, deviceType, protocol } = query;
+
 	const paginatedDevices: PaginatedDevicesWithDetails =
-		await deviceService.getAllDevicesWithVariantsAndProperties(query.page, query.pageSize);
+		await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize, {
+			deviceType,
+			protocol
+		});
 
 	return json({
 		success: true,
 		total: paginatedDevices.total,
-		pageSize: query.pageSize,
-		page: query.page,
+		pageSize,
+		page,
 		devices: paginatedDevices.devices
 	});
 };

@@ -128,7 +128,7 @@ describe('DeviceService', () => {
 
 		const result = await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize);
 
-		expect(mockDeviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(page, pageSize);
+		expect(mockDeviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(page, pageSize, {});
 		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledTimes(
 			mockPaginatedDevices.devices.length
 		);

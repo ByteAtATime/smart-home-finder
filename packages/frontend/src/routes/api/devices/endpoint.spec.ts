@@ -56,7 +56,11 @@ describe('devices', () => {
 
 			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
 				query.page,
-				query.pageSize
+				query.pageSize,
+				{
+					deviceType: undefined,
+					protocol: undefined
+				}
 			);
 			expect(propertyRepository.getPropertiesForDevice).toHaveBeenCalledWith(mockDevice.id);
 			expect(endpoint.status).toBe(200);
