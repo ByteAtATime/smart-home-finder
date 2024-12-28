@@ -5,10 +5,10 @@
 	import * as Pagination from '$lib/components/ui/pagination';
 	import { goto } from '$app/navigation';
 	import Spinner from './Spinner.svelte';
-	import type { DeviceWithProperties } from '@smart-home-finder/common/types';
+	import type { DeviceWithDetails } from '@smart-home-finder/common/types';
 
 	type DeviceTableProps = {
-		devices: DeviceWithProperties[];
+		devices: DeviceWithDetails[];
 		total: number;
 		page: number;
 		pageSize: number;

@@ -93,11 +93,6 @@ const devicePropertyValueSchema = selectPropertySchema
 		updatedAt: true
 	});
 
-export const deviceWithPropertiesSchema = selectDeviceSchema.extend({
-	properties: z.record(z.string(), devicePropertyValueSchema),
-	variants: z.array(variantWithOptionsSchema)
-});
-
 export const currentPriceSchema = z.object({
 	// Listing information
 	listingId: z.number(),
@@ -119,6 +114,12 @@ export const currentPriceSchema = z.object({
 	priceUpdatedAt: z.coerce.date()
 });
 
+export const deviceSchema = selectDeviceSchema.extend({
+	properties: z.record(z.string(), devicePropertyValueSchema),
+	variants: z.array(variantWithOptionsSchema),
+	prices: z.array(currentPriceSchema)
+});
+
 export const deviceWithListingsSchema = selectDeviceSchema.extend({
 	listings: z.array(
 		selectDeviceListingSchema.extend({
@@ -128,8 +129,8 @@ export const deviceWithListingsSchema = selectDeviceSchema.extend({
 	)
 });
 
-export type DeviceWithProperties = z.infer<typeof deviceWithPropertiesSchema>;
-export type CurrentPrice = z.infer<typeof currentPriceSchema>;
+export type DeviceWithDetails = z.infer<typeof deviceSchema>;
+export type ListingWithPrice = z.infer<typeof currentPriceSchema>;
 export type DeviceWithListings = z.infer<typeof deviceWithListingsSchema>;
 
 export type PaginatedDevices = {
@@ -139,8 +140,8 @@ export type PaginatedDevices = {
 	pageSize: number;
 };
 
-export type PaginatedDevicesWithProperties = {
-	devices: DeviceWithProperties[];
+export type PaginatedDevicesWithDetails = {
+	devices: DeviceWithDetails[];
 	total: number;
 	page: number;
 	pageSize: number;

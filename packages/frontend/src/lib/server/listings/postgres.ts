@@ -1,5 +1,5 @@
 import { and, eq, isNull } from 'drizzle-orm';
-import type { CurrentPrice, DeviceListing } from '@smart-home-finder/common/types';
+import type { ListingWithPrice, DeviceListing } from '@smart-home-finder/common/types';
 import {
 	deviceListingsTable,
 	priceHistoryTable,
@@ -15,7 +15,7 @@ export class PostgresListingRepository implements IListingRepository {
 		});
 	}
 
-	async getDevicePrices(id: number): Promise<CurrentPrice[]> {
+	async getDevicePrices(id: number): Promise<ListingWithPrice[]> {
 		const result = await db
 			.select({
 				// Listing information
@@ -48,6 +48,6 @@ export class PostgresListingRepository implements IListingRepository {
 				)
 			);
 
-		return result as CurrentPrice[];
+		return result as ListingWithPrice[];
 	}
 }

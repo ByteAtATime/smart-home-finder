@@ -1,7 +1,7 @@
 import { db } from '../db';
 import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/common/schema';
 import type { IPropertyRepository } from './types';
-import type { DeviceWithProperties, InsertProperty } from '@smart-home-finder/common/types';
+import type { DeviceWithDetails, InsertProperty } from '@smart-home-finder/common/types';
 import { eq } from 'drizzle-orm';
 
 export class PostgresPropertyRepository implements IPropertyRepository {
@@ -13,14 +13,14 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 
 	async getPropertiesForDevice(
 		deviceId: number
-	): Promise<Record<string, DeviceWithProperties['properties'][number]>> {
+	): Promise<Record<string, DeviceWithDetails['properties'][number]>> {
 		const properties = await db
 			.select()
 			.from(propertiesTable)
 			.leftJoin(devicePropertiesTable, eq(propertiesTable.id, devicePropertiesTable.propertyId))
 			.where(eq(devicePropertiesTable.deviceId, deviceId));
 
-		const deviceProperties: Record<string, DeviceWithProperties['properties'][number]> = {};
+		const deviceProperties: Record<string, DeviceWithDetails['properties'][number]> = {};
 
 		for (const property of properties) {
 			const propertyId = property.device_properties!.propertyId;

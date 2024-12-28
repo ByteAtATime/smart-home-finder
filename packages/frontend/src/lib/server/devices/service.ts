@@ -1,4 +1,7 @@
-import type { DeviceWithProperties, PaginatedDevices } from '@smart-home-finder/common/types';
+import type {
+	DeviceWithDetails,
+	PaginatedDevicesWithDetails
+} from '@smart-home-finder/common/types';
 import type { IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
@@ -10,7 +13,7 @@ export class DeviceService {
 		private listingRepository: IListingRepository
 	) {}
 
-	async getDeviceWithVariantsAndProperties(id: number): Promise<DeviceWithProperties | null> {
+	async getDeviceWithVariantsAndProperties(id: number): Promise<DeviceWithDetails | null> {
 		const device = await this.deviceRepository.getDeviceById(id);
 		if (!device) return null;
 
@@ -25,13 +28,14 @@ export class DeviceService {
 	async getAllDevicesWithVariantsAndProperties(
 		page: number,
 		pageSize: number
-	): Promise<PaginatedDevices> {
+	): Promise<PaginatedDevicesWithDetails> {
 		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(page, pageSize);
 		const devicesWithVariantsAndProperties = await Promise.all(
 			paginatedDevices.devices.map(async (device) => {
 				const variants = await this.deviceRepository.getVariantsForDevice(device.id);
 				const properties = await this.propertyRepository.getPropertiesForDevice(device.id);
-				return { ...device, variants, properties };
+				const prices = await this.listingRepository.getDevicePrices(device.id);
+				return { ...device, variants, properties, prices };
 			})
 		);
 

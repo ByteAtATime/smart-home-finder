@@ -2,7 +2,11 @@ import type { IAuthProvider } from '$lib/server/auth/types';
 import { type DeviceService } from '$lib/server/devices/service';
 import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
-import { insertDeviceSchema, type PaginatedDevices } from '@smart-home-finder/common/types';
+import {
+	insertDeviceSchema,
+	type PaginatedDevices,
+	type PaginatedDevicesWithDetails
+} from '@smart-home-finder/common/types';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -15,7 +19,7 @@ export const endpoint_GET: EndpointHandler<{
 	deviceService: DeviceService;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, query }) => {
-	const paginatedDevices: PaginatedDevices =
+	const paginatedDevices: PaginatedDevicesWithDetails =
 		await deviceService.getAllDevicesWithVariantsAndProperties(query.page, query.pageSize);
 
 	return json({
