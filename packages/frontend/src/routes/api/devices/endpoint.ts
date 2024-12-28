@@ -4,7 +4,6 @@ import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import {
 	insertDeviceSchema,
-	type PaginatedDevices,
 	type PaginatedDevicesWithDetails
 } from '@smart-home-finder/common/types';
 import { json } from '@sveltejs/kit';
