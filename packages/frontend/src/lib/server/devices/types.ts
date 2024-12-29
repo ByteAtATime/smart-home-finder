@@ -1,5 +1,5 @@
 import type {
-	Device,
+	BaseDevice,
 	InsertDevice,
 	PaginatedDevices,
 	UpdateDevice,
@@ -7,11 +7,15 @@ import type {
 } from '@smart-home-finder/common/types';
 
 export interface IDeviceRepository {
-	getAllDevices(): Promise<Device[]>;
-	getDeviceById(id: number): Promise<Device | null>;
+	getAllDevices(): Promise<BaseDevice[]>;
+	getBaseDeviceById(id: number): Promise<BaseDevice | null>;
 	insertDevice(device: InsertDevice): Promise<number>;
-	updateDevice(id: number, device: UpdateDevice): Promise<Device | null>;
+	updateDevice(id: number, device: UpdateDevice): Promise<BaseDevice | null>;
 	deleteDevice(id: number): Promise<boolean>;
-	getAllDevicesPaginated(page: number, pageSize: number): Promise<PaginatedDevices>;
+	getAllDevicesPaginated(
+		page: number,
+		pageSize: number,
+		filters: { deviceType?: string; protocol?: string }
+	): Promise<PaginatedDevices>;
 	getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]>;
 }

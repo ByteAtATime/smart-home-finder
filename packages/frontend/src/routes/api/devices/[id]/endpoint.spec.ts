@@ -1,7 +1,7 @@
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_DELETE, endpoint_GET, endpoint_PATCH } from './endpoint';
-import type { Device, DeviceProperty } from '@smart-home-finder/common/types';
+import type { BaseDevice, DeviceProperty } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
@@ -15,7 +15,7 @@ const mockDevice = {
 	protocol: 'zwave',
 	createdAt: new Date(),
 	updatedAt: new Date()
-} satisfies Device;
+} satisfies BaseDevice;
 const mockDeviceProperties = {
 	voltage: {
 		deviceId: 1,
@@ -43,13 +43,13 @@ describe('GET /api/devices/:id', () => {
 
 		const params = { id: '1' };
 
-		deviceRepository.getDeviceById = vi.fn().mockResolvedValue(mockDevice);
+		deviceRepository.getBaseDeviceById = vi.fn().mockResolvedValue(mockDevice);
 		propertyRepository.getPropertiesForDevice = vi.fn().mockResolvedValue(mockDeviceProperties);
 		listingRepository.getDevicePrices = vi.fn().mockResolvedValue([]);
 
 		const endpoint = await endpoint_GET({ deviceService, params });
 
-		expect(deviceRepository.getDeviceById).toHaveBeenCalledWith(1);
+		expect(deviceRepository.getBaseDeviceById).toHaveBeenCalledWith(1);
 		expect(endpoint.status).toBe(200);
 		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 		expect(await endpoint.json()).toEqual({

@@ -8,7 +8,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 	return {
 		device: deviceSchema
 			.extend({
-				prices: z.array(currentPriceSchema)
+				listings: z.array(currentPriceSchema)
 			})
 			.parse(device)
 	};

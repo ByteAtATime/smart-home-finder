@@ -73,13 +73,12 @@ export const insertPriceHistorySchema = createInsertSchema(priceHistoryTable, {
 	validTo: z.coerce.date().nullable().optional()
 });
 
-export type Device = z.infer<typeof selectDeviceSchema>;
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export type UpdateDevice = z.infer<typeof updateDeviceSchema>;
 export type Property = z.infer<typeof selectPropertySchema>;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type UpdateProperty = z.infer<typeof updatePropertySchema>;
-export type DeviceProperty = z.infer<typeof selectDevicePropertySchema>;
+export type SelectDeviceProperty = z.infer<typeof selectDevicePropertySchema>;
 export type Seller = z.infer<typeof selectSellerSchema>;
 export type InsertSeller = z.infer<typeof insertSellerSchema>;
 export type DeviceListing = z.infer<typeof selectDeviceListingSchema>;
@@ -101,14 +100,9 @@ export const variantWithOptionsSchema = selectVariantSchema.extend({
 
 export type VariantWithOptions = z.infer<typeof variantWithOptionsSchema>;
 
-const devicePropertyValueSchema = selectPropertySchema
-	.extend({
-		value: z.union([z.number(), z.number(), z.string(), z.boolean()])
-	})
-	.omit({
-		createdAt: true,
-		updatedAt: true
-	});
+const devicePropertyValueSchema = selectPropertySchema.extend({
+	value: z.union([z.number(), z.number(), z.string(), z.boolean()])
+});
 
 export const currentPriceSchema = z.object({
 	// Listing information
@@ -134,7 +128,7 @@ export const currentPriceSchema = z.object({
 export const deviceSchema = selectDeviceSchema.extend({
 	properties: z.record(z.string(), devicePropertyValueSchema),
 	variants: z.array(variantWithOptionsSchema),
-	prices: z.array(currentPriceSchema)
+	listings: z.array(currentPriceSchema)
 });
 
 export const deviceWithListingsSchema = selectDeviceSchema.extend({
@@ -146,12 +140,18 @@ export const deviceWithListingsSchema = selectDeviceSchema.extend({
 	)
 });
 
+export type BaseDevice = z.infer<typeof selectDeviceSchema>;
+
+export type DeviceProperty = z.infer<typeof devicePropertyValueSchema>;
+
+export type DeviceProperties = Record<string, DeviceProperty>;
+
 export type DeviceWithDetails = z.infer<typeof deviceSchema>;
 export type ListingWithPrice = z.infer<typeof currentPriceSchema>;
 export type DeviceWithListings = z.infer<typeof deviceWithListingsSchema>;
 
 export type PaginatedDevices = {
-	devices: Device[];
+	devices: BaseDevice[];
 	total: number;
 	page: number;
 	pageSize: number;

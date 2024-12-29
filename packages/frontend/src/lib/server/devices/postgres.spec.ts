@@ -81,7 +81,7 @@ describe('PostgresDeviceRepository', () => {
 		};
 		db.query.devicesTable.findFirst.mockResolvedValue(mockDevice);
 
-		const device = await repository.getDeviceById(1);
+		const device = await repository.getBaseDeviceById(1);
 
 		expect(db.query.devicesTable.findFirst).toHaveBeenCalled();
 		expect(device).toEqual(mockDevice);
@@ -90,7 +90,7 @@ describe('PostgresDeviceRepository', () => {
 	it('should return null if device not found by ID', async () => {
 		db.query.devicesTable.findFirst.mockResolvedValue(undefined);
 
-		const device = await repository.getDeviceById(99);
+		const device = await repository.getBaseDeviceById(99);
 
 		expect(device).toBeNull();
 	});

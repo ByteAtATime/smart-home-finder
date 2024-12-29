@@ -57,48 +57,50 @@
 				<Carousel.Next class="right-0" />
 			</Carousel.Root>
 
-			<div class="w-full space-y-4">
-				<h2 class="text-xl font-semibold">Variants</h2>
-				{#each device.variants as variant}
-					<div class="flex items-center gap-2">
-						{variant.name}:
-						{#each variant.options as option}
-							{@const isThisDevice = option.deviceId === device.id}
-							<Button
-								variant="outline"
-								size="sm"
-								href={!isThisDevice ? `/devices/${option.deviceId}` : undefined}
-								class={isThisDevice ? 'pointer-events-none opacity-50' : ''}
-							>
-								{option.value}
-							</Button>
-						{/each}
-					</div>
-				{/each}
-			</div>
+			{#if device.variants.length > 0}
+				<div class="w-full space-y-4">
+					<h2 class="text-xl font-semibold">Variants</h2>
+					{#each device.variants as variant}
+						<div class="flex items-center gap-2">
+							{variant.name}:
+							{#each variant.options as option}
+								{@const isThisDevice = option.deviceId === device.id}
+								<Button
+									variant="outline"
+									size="sm"
+									href={!isThisDevice ? `/devices/${option.deviceId}` : undefined}
+									class={isThisDevice ? 'pointer-events-none opacity-50' : ''}
+								>
+									{option.value}
+								</Button>
+							{/each}
+						</div>
+					{/each}
+				</div>
+			{/if}
 
 			<div class="w-full space-y-4">
 				<h2 class="text-xl font-semibold">Prices</h2>
 				<div class="grid gap-4">
-					{#each device.prices as price}
+					{#each device.listings as listing}
 						<Card.Root>
 							<Card.Content class="p-4">
 								<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 									<div>
-										<div class="mb-1 font-medium">{price.sellerName}</div>
+										<div class="mb-1 font-medium">{listing.sellerName}</div>
 										<div class="text-muted-foreground flex items-center gap-2 text-sm">
-											<span>{price.inStock ? 'In Stock' : 'Out of Stock'}</span>
+											<span>{listing.inStock ? 'In Stock' : 'Out of Stock'}</span>
 											<span>•</span>
-											<span>Updated {relativeTime(price.priceUpdatedAt)}</span>
+											<span>Updated {relativeTime(listing.priceUpdatedAt)}</span>
 										</div>
 									</div>
 									<div class="flex items-center gap-3">
-										<div class="text-2xl font-bold">${price.price.toFixed(2)}</div>
+										<div class="text-2xl font-bold">${listing.price.toFixed(2)}</div>
 										<Button
-											aria-label={`Buy from ${price.sellerName}`}
+											aria-label={`Buy from ${listing.sellerName}`}
 											variant="outline"
 											size="sm"
-											href={price.url}
+											href={listing.url}
 											target="_blank"
 											rel="noopener noreferrer"
 											class="gap-1"

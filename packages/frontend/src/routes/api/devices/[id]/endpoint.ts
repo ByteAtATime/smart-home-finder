@@ -18,7 +18,7 @@ export const endpoint_GET: EndpointHandler<{
 
 	const id = parseInt(params.id);
 
-	const device = await deviceService.getDeviceWithVariantsAndProperties(id);
+	const device = await deviceService.getDeviceById(id);
 
 	if (!device) {
 		return json({ success: false, error: 'Device not found' }, { status: 404 });
@@ -26,7 +26,7 @@ export const endpoint_GET: EndpointHandler<{
 
 	return json({
 		success: true,
-		device
+		device: await device.toJson()
 	});
 };
 

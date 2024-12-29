@@ -3,7 +3,7 @@ import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/commo
 import type { IPropertyRepository } from './types';
 import {
 	selectPropertySchema,
-	type DeviceWithDetails,
+	type DeviceProperties,
 	type InsertProperty,
 	type Property,
 	type UpdateProperty
@@ -17,16 +17,14 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 		return newProperty.id;
 	}
 
-	async getPropertiesForDevice(
-		deviceId: number
-	): Promise<Record<string, DeviceWithDetails['properties'][number]>> {
+	async getPropertiesForDevice(deviceId: number): Promise<DeviceProperties> {
 		const properties = await db
 			.select()
 			.from(propertiesTable)
 			.leftJoin(devicePropertiesTable, eq(propertiesTable.id, devicePropertiesTable.propertyId))
 			.where(eq(devicePropertiesTable.deviceId, deviceId));
 
-		const deviceProperties: Record<string, DeviceWithDetails['properties'][number]> = {};
+		const deviceProperties: DeviceProperties = {};
 
 		for (const property of properties) {
 			const propertyId = property.device_properties!.propertyId;
@@ -44,7 +42,9 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 				type: propertyType,
 				unit: property.properties.unit,
 				description: property.properties.description,
-				value: propertyValue
+				value: propertyValue,
+				createdAt: property.properties.createdAt,
+				updatedAt: property.properties.updatedAt
 			};
 		}
 

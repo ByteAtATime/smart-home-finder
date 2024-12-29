@@ -2,7 +2,7 @@ import { count, eq, and, sql, inArray } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	variantWithOptionsSchema,
-	type Device,
+	type BaseDevice,
 	type InsertDevice,
 	type PaginatedDevices,
 	type UpdateDevice,
@@ -19,7 +19,7 @@ import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
 export class PostgresDeviceRepository implements IDeviceRepository {
-	async getAllDevices(): Promise<Device[]> {
+	async getAllDevices(): Promise<BaseDevice[]> {
 		return await db.query.devicesTable.findMany();
 	}
 
@@ -34,10 +34,12 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 
 		const whereConditions = [];
 		if (filters.deviceType) {
-			whereConditions.push(eq(devicesTable.deviceType, filters.deviceType));
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			whereConditions.push(eq(devicesTable.deviceType, filters.deviceType as any));
 		}
 		if (filters.protocol) {
-			whereConditions.push(eq(devicesTable.protocol, filters.protocol));
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			whereConditions.push(eq(devicesTable.protocol, filters.protocol as any));
 		}
 
 		if (whereConditions.length > 0) {
@@ -62,7 +64,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return result.length > 0;
 	}
 
-	async getDeviceById(id: number): Promise<Device | null> {
+	async getBaseDeviceById(id: number): Promise<BaseDevice | null> {
 		const device =
 			(await db.query.devicesTable.findFirst({
 				where: eq(devicesTable.id, id)
@@ -84,7 +86,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return result[0].insertedId;
 	}
 
-	async updateDevice(id: number, device: UpdateDevice): Promise<Device | null> {
+	async updateDevice(id: number, device: UpdateDevice): Promise<BaseDevice | null> {
 		const result = await db
 			.update(devicesTable)
 			.set({ ...device, updatedAt: sql`CURRENT_TIMESTAMP` })

@@ -1,4 +1,5 @@
 import type {
+	DeviceProperties,
 	DeviceWithDetails,
 	InsertProperty,
 	Property,
@@ -9,8 +10,6 @@ export interface IPropertyRepository {
 	insertProperty(property: InsertProperty): Promise<string>;
 	updateProperty(id: string, propertyData: UpdateProperty): Promise<Property | null>;
 	deleteProperty(id: string): Promise<boolean>;
-	getPropertiesForDevice(
-		deviceId: number
-	): Promise<Record<string, DeviceWithDetails['properties'][number]>>;
+	getPropertiesForDevice(deviceId: number): Promise<DeviceProperties>;
 	getAllProperties(): Promise<Property[]>;
 }

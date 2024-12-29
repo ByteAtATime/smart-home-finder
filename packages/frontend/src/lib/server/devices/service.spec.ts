@@ -4,7 +4,7 @@ import { MockDeviceRepository } from './mock';
 import { MockPropertyRepository } from '../properties/mock';
 import { MockListingRepository } from '../listings/mock';
 import type {
-	Device,
+	BaseDevice,
 	ListingWithPrice,
 	PaginatedDevices,
 	VariantWithOptions
@@ -29,7 +29,7 @@ describe('DeviceService', () => {
 
 	it('should get device with variants and properties', async () => {
 		const deviceId = 1;
-		const mockDevice: Device = {
+		const mockDevice: BaseDevice = {
 			id: deviceId,
 			name: 'Test Device',
 			deviceType: 'light',
@@ -61,14 +61,14 @@ describe('DeviceService', () => {
 
 		const mockPrices: ListingWithPrice[] = [];
 
-		mockDeviceRepository.getDeviceById.mockResolvedValue(mockDevice);
+		mockDeviceRepository.getBaseDeviceById.mockResolvedValue(mockDevice);
 		mockDeviceRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
 		mockPropertyRepository.getPropertiesForDevice.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
 
 		const result = await deviceService.getDeviceWithVariantsAndProperties(deviceId);
 
-		expect(mockDeviceRepository.getDeviceById).toHaveBeenCalledWith(deviceId);
+		expect(mockDeviceRepository.getBaseDeviceById).toHaveBeenCalledWith(deviceId);
 		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledWith(deviceId);
 		expect(mockPropertyRepository.getPropertiesForDevice).toHaveBeenCalledWith(deviceId);
 		expect(mockListingRepository.getDevicePrices).toHaveBeenCalledWith(deviceId);
@@ -82,7 +82,7 @@ describe('DeviceService', () => {
 
 	it('should return null if device not found', async () => {
 		const deviceId = 99;
-		mockDeviceRepository.getDeviceById.mockResolvedValue(null);
+		mockDeviceRepository.getBaseDeviceById.mockResolvedValue(null);
 
 		const result = await deviceService.getDeviceWithVariantsAndProperties(deviceId);
 
