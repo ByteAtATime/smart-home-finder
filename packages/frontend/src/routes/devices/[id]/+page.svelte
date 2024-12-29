@@ -42,11 +42,13 @@
 					{#each device.images as image}
 						<Carousel.Item>
 							<div class="p-1">
-								<img
-									src={image}
-									alt={device.name}
-									class="h-[300px] w-full rounded-lg object-contain"
-								/>
+								{#key image}
+									<img
+										src={image}
+										alt={device.name}
+										class="h-[300px] w-full rounded-lg object-contain"
+									/>
+								{/key}
 							</div>
 						</Carousel.Item>
 					{/each}
