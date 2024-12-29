@@ -41,9 +41,6 @@ export const devicesTable = pgTable('devices', {
 
 export const variantsTable = pgTable('variants', {
 	id: serial('id').primaryKey(),
-	deviceId: integer('device_id')
-		.references(() => devicesTable.id)
-		.notNull(),
 	name: text('name').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
@@ -54,12 +51,21 @@ export const variantOptionsTable = pgTable('variant_options', {
 	variantId: integer('variant_id')
 		.references(() => variantsTable.id)
 		.notNull(),
-	deviceId: integer('device_id')
-		.references(() => devicesTable.id)
-		.notNull(),
 	value: text('value').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
+});
+
+export const deviceVariantsTable = pgTable('device_variants', {
+	deviceId: integer('device_id')
+		.references(() => devicesTable.id)
+		.notNull(),
+	variantId: integer('variant_id')
+		.references(() => variantsTable.id)
+		.notNull(),
+	variantOptionId: integer('variant_option_id')
+		.references(() => variantOptionsTable.id)
+		.notNull()
 });
 
 export const propertiesTable = pgTable('properties', {

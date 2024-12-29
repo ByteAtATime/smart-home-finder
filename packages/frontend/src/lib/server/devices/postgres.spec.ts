@@ -18,9 +18,11 @@ vi.mock('$lib/server/db', () => ({
 		values: vi.fn().mockReturnThis(),
 		returning: vi.fn().mockReturnThis(),
 		leftJoin: vi.fn().mockReturnThis(),
+		innerJoin: vi.fn().mockReturnThis(),
 		where: vi.fn().mockReturnThis(),
 		offset: vi.fn().mockReturnThis(),
 		limit: vi.fn().mockReturnThis(),
+		groupBy: vi.fn().mockReturnThis(),
 		execute: vi.fn()
 	}
 }));
@@ -127,41 +129,44 @@ describe('PostgresDeviceRepository', () => {
 		const deviceId = 1;
 		const mockVariants = [
 			{
-				id: 1,
-				name: 'Variant 1',
-				updatedAt: new Date(),
-				createdAt: new Date(),
-				deviceId: deviceId,
+				variantId: 1,
+				variantName: 'Variant 1',
+				variantCreatedAt: new Date(),
+				variantUpdatedAt: new Date(),
 				optionId: 1,
-				optionValue: 'Option 1'
+				optionValue: 'Option 1',
+				optionCreatedAt: new Date(),
+				optionUpdatedAt: new Date()
 			},
 			{
-				id: 1,
-				name: 'Variant 1',
-				updatedAt: new Date(),
-				createdAt: new Date(),
-				deviceId: deviceId,
+				variantId: 1,
+				variantName: 'Variant 1',
+				variantCreatedAt: new Date(),
+				variantUpdatedAt: new Date(),
 				optionId: 2,
-				optionValue: 'Option 2'
+				optionValue: 'Option 2',
+				optionCreatedAt: new Date(),
+				optionUpdatedAt: new Date()
 			},
 			{
-				id: 2,
-				name: 'Variant 2',
-				updatedAt: new Date(),
-				createdAt: new Date(),
-				deviceId: deviceId,
+				variantId: 2,
+				variantName: 'Variant 2',
+				variantCreatedAt: new Date(),
+				variantUpdatedAt: new Date(),
 				optionId: 3,
-				optionValue: 'Option 3'
+				optionValue: 'Option 3',
+				optionCreatedAt: new Date(),
+				optionUpdatedAt: new Date()
 			}
 		];
 		db.select().from.mockReturnThis();
-		db.select().from().leftJoin().where.mockResolvedValue(mockVariants);
+		db.select().from().innerJoin().innerJoin().innerJoin().where.mockResolvedValue(mockVariants);
 
 		const result = await repository.getVariantsForDevice(deviceId);
 
 		expect(db.select).toHaveBeenCalled();
 		expect(db.from).toHaveBeenCalledWith(variantsTable);
-		expect(db.leftJoin).toHaveBeenCalledWith(variantOptionsTable, expect.anything());
+		expect(db.innerJoin).toHaveBeenCalledWith(variantOptionsTable, expect.anything());
 		expect(db.where).toHaveBeenCalled();
 
 		expect(result).toEqual([
@@ -170,23 +175,20 @@ describe('PostgresDeviceRepository', () => {
 				name: 'Variant 1',
 				updatedAt: expect.any(Date),
 				createdAt: expect.any(Date),
-				deviceId: deviceId,
 				options: [
 					{
 						id: 1,
 						value: 'Option 1',
 						variantId: 1,
 						createdAt: expect.any(Date),
-						updatedAt: expect.any(Date),
-						deviceId: deviceId
+						updatedAt: expect.any(Date)
 					},
 					{
 						id: 2,
 						value: 'Option 2',
 						variantId: 1,
 						createdAt: expect.any(Date),
-						updatedAt: expect.any(Date),
-						deviceId: deviceId
+						updatedAt: expect.any(Date)
 					}
 				]
 			},
@@ -195,15 +197,13 @@ describe('PostgresDeviceRepository', () => {
 				name: 'Variant 2',
 				updatedAt: expect.any(Date),
 				createdAt: expect.any(Date),
-				deviceId: deviceId,
 				options: [
 					{
 						id: 3,
 						value: 'Option 3',
 						variantId: 2,
 						createdAt: expect.any(Date),
-						updatedAt: expect.any(Date),
-						deviceId: deviceId
+						updatedAt: expect.any(Date)
 					}
 				]
 			}
@@ -213,7 +213,7 @@ describe('PostgresDeviceRepository', () => {
 	it('should return an empty array if no variants are found for a device', async () => {
 		const deviceId = 1;
 		db.select().from.mockReturnThis();
-		db.select().from().leftJoin().where.mockResolvedValue([]);
+		db.select().from().groupBy.mockResolvedValue([]);
 
 		const result = await repository.getVariantsForDevice(deviceId);
 

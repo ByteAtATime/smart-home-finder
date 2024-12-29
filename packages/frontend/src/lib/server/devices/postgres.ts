@@ -1,4 +1,4 @@
-import { count, eq, and, sql } from 'drizzle-orm';
+import { count, eq, and, sql, inArray } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	variantWithOptionsSchema,
@@ -6,9 +6,15 @@ import {
 	type InsertDevice,
 	type PaginatedDevices,
 	type UpdateDevice,
+	type Variant,
 	type VariantWithOptions
 } from '@smart-home-finder/common/types';
-import { devicesTable, variantOptionsTable, variantsTable } from '@smart-home-finder/common/schema';
+import {
+	devicesTable,
+	deviceVariantsTable,
+	variantOptionsTable,
+	variantsTable
+} from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
@@ -93,30 +99,70 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	}
 
 	async getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]> {
-		const variants = await db
+		const options = await db
 			.select({
-				id: variantsTable.id,
-				name: variantsTable.name,
-				updatedAt: variantsTable.updatedAt,
-				createdAt: variantsTable.createdAt,
-				deviceId: variantsTable.deviceId,
+				variantId: variantsTable.id,
+				variantName: variantsTable.name,
+				variantCreatedAt: variantsTable.createdAt,
+				variantUpdatedAt: variantsTable.updatedAt,
 				optionId: variantOptionsTable.id,
-				optionValue: variantOptionsTable.value
+				optionValue: variantOptionsTable.value,
+				optionDeviceId: sql<number>`
+      COALESCE(
+        MIN(CASE 
+          WHEN ${deviceVariantsTable.deviceId} = ${deviceId} THEN ${deviceVariantsTable.deviceId}
+          ELSE NULL 
+        END),
+        MIN(${deviceVariantsTable.deviceId})
+      )
+			  `, // TODO: what's the best way to handle multiple devices with the same variant option?
+				optionCreatedAt: variantOptionsTable.createdAt,
+				optionUpdatedAt: variantOptionsTable.updatedAt
 			})
-			.from(variantsTable)
-			.leftJoin(variantOptionsTable, eq(variantsTable.id, variantOptionsTable.variantId))
-			.where(eq(variantsTable.deviceId, deviceId));
+			.from(variantOptionsTable)
+			.innerJoin(variantsTable, eq(variantOptionsTable.variantId, variantsTable.id))
+			.innerJoin(
+				deviceVariantsTable,
+				eq(variantOptionsTable.id, deviceVariantsTable.variantOptionId)
+			)
+			.where(
+				inArray(
+					variantsTable.id,
+					db
+						.select({ id: deviceVariantsTable.variantId })
+						.from(deviceVariantsTable)
+						.where(eq(deviceVariantsTable.deviceId, deviceId))
+				)
+			)
+			.groupBy(
+				variantsTable.id,
+				variantsTable.name,
+				variantsTable.createdAt,
+				variantsTable.updatedAt,
+				variantOptionsTable.id,
+				variantOptionsTable.value,
+				variantOptionsTable.createdAt,
+				variantOptionsTable.updatedAt
+			);
 
-		const aggregatedVariants = variants.reduce(
-			(acc, variant) => {
-				acc[variant.id] = acc[variant.id] ?? { ...variant, options: [] };
-				acc[variant.id].options?.push({
-					id: variant.optionId!,
-					value: variant.optionValue!,
-					createdAt: variant.createdAt!,
-					updatedAt: variant.updatedAt!,
-					deviceId: variant.deviceId!,
-					variantId: variant.id!
+		const aggregatedVariants = options.reduce(
+			(acc, option) => {
+				const variant = {
+					id: option.variantId,
+					name: option.variantName,
+					createdAt: option.variantCreatedAt,
+					updatedAt: option.variantUpdatedAt
+				} satisfies Variant;
+
+				acc[option.variantId] = acc[option.variantId] ?? { ...variant, options: [] };
+
+				acc[option.variantId].options?.push({
+					id: option.optionId!,
+					value: option.optionValue!,
+					deviceId: option.optionDeviceId,
+					createdAt: option.optionCreatedAt!,
+					updatedAt: option.optionUpdatedAt!,
+					variantId: option.variantId!
 				});
 				return acc;
 			},

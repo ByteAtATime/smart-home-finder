@@ -4,6 +4,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { Button } from '$lib/components/ui/button';
 	import { ExternalLinkIcon } from 'lucide-svelte';
+	import { navigating } from '$app/state';
 
 	const { data } = $props();
 	const { device } = $derived(data);
@@ -25,7 +26,7 @@
 	};
 </script>
 
-<div class="container mx-auto max-w-screen-md p-4">
+<div class="container mx-auto max-w-screen-md p-4 {navigating.to ? 'opacity-50' : ''}">
 	<Card.Root class="p-6">
 		<Card.Header class="flex items-center justify-between">
 			<Card.Title>{device.name}</Card.Title>
@@ -60,7 +61,13 @@
 					<div class="flex items-center gap-2">
 						{variant.name}:
 						{#each variant.options as option}
-							<Button variant="outline" size="sm" href={`/devices/${device.id}`}>
+							{@const isThisDevice = option.deviceId === device.id}
+							<Button
+								variant="outline"
+								size="sm"
+								href={!isThisDevice ? `/devices/${option.deviceId}` : undefined}
+								class={isThisDevice ? 'pointer-events-none opacity-50' : ''}
+							>
 								{option.value}
 							</Button>
 						{/each}

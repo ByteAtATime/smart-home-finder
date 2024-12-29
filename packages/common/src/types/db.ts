@@ -92,7 +92,11 @@ export type VariantOption = z.infer<typeof selectVariantOptionSchema>;
 export type InsertVariantOption = z.infer<typeof insertVariantOptionSchema>;
 
 export const variantWithOptionsSchema = selectVariantSchema.extend({
-	options: selectVariantOptionSchema.array()
+	options: selectVariantOptionSchema
+		.extend({
+			deviceId: z.number()
+		})
+		.array()
 });
 
 export type VariantWithOptions = z.infer<typeof variantWithOptionsSchema>;
