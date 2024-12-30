@@ -18,12 +18,14 @@ const mockDevice = {
 } satisfies BaseDevice;
 const mockDeviceProperties = {
 	voltage: {
-		deviceId: 1,
-		propertyId: 'voltage',
-		intValue: null,
-		floatValue: 123.45,
-		stringValue: null,
-		booleanValue: null
+		id: 'voltage',
+		name: 'voltage',
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		value: 123.45,
+		type: 'float',
+		unit: 'V',
+		description: null
 	}
 } satisfies Record<string, DeviceProperty>;
 const resultDevice = JSON.parse(

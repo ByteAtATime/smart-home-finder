@@ -3,6 +3,8 @@ import {
 	selectDeviceSchema,
 	variantWithOptionsSchema,
 	type BaseDevice,
+	type DeviceProtocol,
+	type DeviceType,
 	type InsertDevice,
 	type PaginatedDevices,
 	type UpdateDevice,
@@ -34,10 +36,10 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 
 		const whereConditions = [];
 		if (filters.deviceType) {
-			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType));
+			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType as DeviceType[]));
 		}
 		if (filters.protocol) {
-			whereConditions.push(inArray(devicesTable.protocol, filters.protocol));
+			whereConditions.push(inArray(devicesTable.protocol, filters.protocol as DeviceProtocol[]));
 		}
 
 		if (whereConditions.length > 0) {

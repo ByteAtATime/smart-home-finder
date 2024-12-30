@@ -42,7 +42,6 @@ describe('DeviceService', () => {
 			{
 				id: 1,
 				name: 'Variant 1',
-				deviceId: deviceId,
 				createdAt: new Date(),
 				updatedAt: new Date(),
 				options: []
@@ -66,25 +65,20 @@ describe('DeviceService', () => {
 		mockPropertyRepository.getPropertiesForDevice.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
 
-		const result = await deviceService.getDeviceWithVariantsAndProperties(deviceId);
+		const result = await deviceService.getDeviceById(deviceId);
 
-		expect(mockDeviceRepository.getBaseDeviceById).toHaveBeenCalledWith(deviceId);
-		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledWith(deviceId);
-		expect(mockPropertyRepository.getPropertiesForDevice).toHaveBeenCalledWith(deviceId);
-		expect(mockListingRepository.getDevicePrices).toHaveBeenCalledWith(deviceId);
-		expect(result).toEqual({
-			...mockDevice,
-			variants: mockVariants,
-			properties: mockProperties,
-			prices: mockPrices
-		});
+		expect(result).toBeDefined();
+
+		expect(await result!.getListings()).toEqual(mockPrices);
+		expect(await result!.getVariants()).toEqual(mockVariants);
+		expect(await result!.getProperties()).toEqual(mockProperties);
 	});
 
 	it('should return null if device not found', async () => {
 		const deviceId = 99;
 		mockDeviceRepository.getBaseDeviceById.mockResolvedValue(null);
 
-		const result = await deviceService.getDeviceWithVariantsAndProperties(deviceId);
+		const result = await deviceService.getDeviceById(deviceId);
 
 		expect(result).toBeNull();
 	});
@@ -145,7 +139,7 @@ describe('DeviceService', () => {
 				...device,
 				variants: mockVariants,
 				properties: mockProperties,
-				prices: mockPrices
+				listings: mockPrices
 			}))
 		});
 	});

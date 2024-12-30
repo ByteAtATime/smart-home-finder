@@ -1,18 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresPropertyRepository } from './postgres';
-import { db } from '$lib/server/db';
 import type { InsertProperty } from '@smart-home-finder/common/types';
 
+const mockDb = vi.hoisted(() => ({
+	insert: vi.fn().mockReturnThis(),
+	values: vi.fn().mockReturnThis(),
+	returning: vi.fn().mockReturnThis(),
+	select: vi.fn().mockReturnThis(),
+	from: vi.fn().mockReturnThis(),
+	leftJoin: vi.fn().mockReturnThis(),
+	where: vi.fn().mockReturnThis()
+}));
+
 vi.mock('$lib/server/db', () => ({
-	db: {
-		insert: vi.fn().mockReturnThis(),
-		values: vi.fn().mockReturnThis(),
-		returning: vi.fn().mockReturnThis(),
-		select: vi.fn().mockReturnThis(),
-		from: vi.fn().mockReturnThis(),
-		leftJoin: vi.fn().mockReturnThis(),
-		where: vi.fn().mockReturnThis()
-	}
+	db: mockDb
 }));
 
 describe('PostgresPropertyRepository', () => {
@@ -32,13 +33,13 @@ describe('PostgresPropertyRepository', () => {
 			description: null
 		};
 		const returnedProperty = { id: 'new-property' }; // Simplified for mocking
-		db.insert().values().returning.mockResolvedValue([returnedProperty]);
+		mockDb.insert().values().returning.mockResolvedValue([returnedProperty]);
 
 		const result = await repository.insertProperty(newProperty);
 
-		expect(db.insert).toHaveBeenCalled();
-		expect(db.values).toHaveBeenCalledWith(newProperty);
-		expect(db.returning).toHaveBeenCalled();
+		expect(mockDb.insert).toHaveBeenCalled();
+		expect(mockDb.values).toHaveBeenCalledWith(newProperty);
+		expect(mockDb.returning).toHaveBeenCalled();
 		expect(result).toBe(returnedProperty.id);
 	});
 
@@ -78,12 +79,12 @@ describe('PostgresPropertyRepository', () => {
 				}
 			}
 		];
-		db.select().from().leftJoin().where.mockResolvedValue(mockProperties);
+		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
 
 		const result = await repository.getPropertiesForDevice(deviceId);
 
-		expect(db.select).toHaveBeenCalled();
-		expect(db.where).toHaveBeenCalled();
+		expect(mockDb.select).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
 		expect(result).toEqual({
 			property1: {
 				id: 'property1',
@@ -124,7 +125,7 @@ describe('PostgresPropertyRepository', () => {
 				}
 			}
 		];
-		db.select().from().leftJoin().where.mockResolvedValue(mockProperties);
+		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
 
 		const result = await repository.getPropertiesForDevice(deviceId);
 
@@ -151,7 +152,7 @@ describe('PostgresPropertyRepository', () => {
 				}
 			}
 		];
-		db.select().from().leftJoin().where.mockResolvedValue(mockProperties);
+		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
 
 		const result = await repository.getPropertiesForDevice(deviceId);
 
@@ -169,7 +170,7 @@ describe('PostgresPropertyRepository', () => {
 
 	it('should return empty object if no properties found', async () => {
 		const deviceId = 1;
-		db.select().from().leftJoin().where.mockResolvedValue([]);
+		mockDb.select().from().leftJoin().where.mockResolvedValue([]);
 
 		const result = await repository.getPropertiesForDevice(deviceId);
 

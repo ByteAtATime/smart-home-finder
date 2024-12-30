@@ -6,7 +6,9 @@ import {
 	deviceListingsTable,
 	priceHistoryTable,
 	variantsTable,
-	variantOptionsTable
+	variantOptionsTable,
+	deviceTypeEnum,
+	protocolEnum
 } from '../schema';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
@@ -72,6 +74,9 @@ export const insertPriceHistorySchema = createInsertSchema(priceHistoryTable, {
 	validFrom: z.coerce.date().optional(),
 	validTo: z.coerce.date().nullable().optional()
 });
+
+export type DeviceType = (typeof deviceTypeEnum.enumValues)[number];
+export type DeviceProtocol = (typeof protocolEnum.enumValues)[number];
 
 export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export type UpdateDevice = z.infer<typeof updateDeviceSchema>;

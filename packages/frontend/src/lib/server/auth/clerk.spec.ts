@@ -1,22 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ClerkAuthProvider } from './clerk';
-import { db } from '$lib/server/db';
 import type { AuthObject } from '@clerk/backend';
 
-vi.mock('$lib/server/db', () => ({
-	db: {
-		select: vi.fn().mockReturnThis(),
-		from: vi.fn().mockReturnThis(),
-		where: vi.fn().mockReturnThis(),
-		execute: vi.fn(),
-		insert: vi.fn().mockReturnThis(),
-		values: vi.fn().mockReturnThis(),
-		query: {
-			usersTable: {
-				findFirst: vi.fn()
-			}
+const mockDb = vi.hoisted(() => ({
+	select: vi.fn().mockReturnThis(),
+	from: vi.fn().mockReturnThis(),
+	where: vi.fn().mockReturnThis(),
+	execute: vi.fn(),
+	insert: vi.fn().mockReturnThis(),
+	values: vi.fn().mockReturnThis(),
+	query: {
+		usersTable: {
+			findFirst: vi.fn()
 		}
 	}
+}));
+
+vi.mock('$lib/server/db', () => ({
+	db: mockDb
 }));
 
 describe('ClerkAuthProvider', () => {
@@ -42,7 +43,8 @@ describe('ClerkAuthProvider', () => {
 		it('should return user ID if user exists in DB', async () => {
 			const auth = { userId: 'clerkId1' } as AuthObject;
 			const provider = new ClerkAuthProvider(auth);
-			db.select()
+			mockDb
+				.select()
 				.from()
 				.where()
 				.execute.mockResolvedValue([{ id: 'userId1' }]);
@@ -54,10 +56,10 @@ describe('ClerkAuthProvider', () => {
 		it('should insert user and return null if user does not exist in DB', async () => {
 			const auth = { userId: 'clerkId2' } as AuthObject;
 			const provider = new ClerkAuthProvider(auth);
-			db.select().from().where().execute.mockResolvedValue([]);
+			mockDb.select().from().where().execute.mockResolvedValue([]);
 
 			const userId = await provider.getUserId();
-			expect(db.insert).toHaveBeenCalled();
+			expect(mockDb.insert).toHaveBeenCalled();
 			expect(userId).toBeNull();
 		});
 
@@ -74,7 +76,7 @@ describe('ClerkAuthProvider', () => {
 		it('should return true if user is admin', async () => {
 			const auth = { userId: 'clerkId3' } as AuthObject;
 			const provider = new ClerkAuthProvider(auth);
-			db.query.usersTable.findFirst.mockResolvedValue({ isAdmin: true });
+			mockDb.query.usersTable.findFirst.mockResolvedValue({ isAdmin: true });
 
 			const isAdmin = await provider.isAdmin();
 			expect(isAdmin).toBe(true);
@@ -83,7 +85,7 @@ describe('ClerkAuthProvider', () => {
 		it('should return false if user is not admin', async () => {
 			const auth = { userId: 'clerkId4' } as AuthObject;
 			const provider = new ClerkAuthProvider(auth);
-			db.query.usersTable.findFirst.mockResolvedValue({ isAdmin: false });
+			mockDb.query.usersTable.findFirst.mockResolvedValue({ isAdmin: false });
 
 			const isAdmin = await provider.isAdmin();
 			expect(isAdmin).toBe(false);

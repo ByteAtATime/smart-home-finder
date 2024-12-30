@@ -50,7 +50,7 @@ export class DeviceService {
 				const variants = await this.deviceRepository.getVariantsForDevice(device.id);
 				const properties = await this.propertyRepository.getPropertiesForDevice(device.id);
 				const prices = await this.listingRepository.getDevicePrices(device.id);
-				return { ...device, variants, properties, prices };
+				return { ...device, variants, properties, listings: prices };
 			})
 		);
 
