@@ -47,7 +47,7 @@ export class DeviceService {
 			filters
 		);
 		const devicesWithVariantsAndProperties = await Promise.all(
-			paginatedDevices.devices.map(async (device) => {
+			paginatedDevices.items.map(async (device) => {
 				const deviceInstance = new Device(device, this);
 				const variants = await deviceInstance.getVariants();
 				const properties = await deviceInstance.getProperties();
