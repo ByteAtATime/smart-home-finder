@@ -3,12 +3,11 @@ import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/commo
 import type { IPropertyRepository } from './types';
 import {
 	selectPropertySchema,
-	type DeviceProperties,
 	type InsertProperty,
-	type Property,
 	type UpdateProperty
 } from '@smart-home-finder/common/types';
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, and } from 'drizzle-orm';
+import { Property } from './property';
 
 export class PostgresPropertyRepository implements IPropertyRepository {
 	async insertProperty(property: InsertProperty): Promise<string> {
@@ -17,43 +16,23 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 		return newProperty.id;
 	}
 
-	async getPropertiesForDevice(deviceId: number): Promise<DeviceProperties> {
-		const properties = await db
-			.select()
-			.from(propertiesTable)
-			.leftJoin(devicePropertiesTable, eq(propertiesTable.id, devicePropertiesTable.propertyId))
-			.where(eq(devicePropertiesTable.deviceId, deviceId));
-
-		const deviceProperties: DeviceProperties = {};
-
-		for (const property of properties) {
-			const propertyId = property.device_properties!.propertyId;
-			const propertyType = property.properties.type;
-
-			if (!propertyType) continue;
-
-			const propertyValue = this.extractPropertyValue(property.device_properties!);
-
-			if (propertyValue === null) continue;
-
-			deviceProperties[propertyId] = {
-				id: propertyId,
-				name: property.properties.name,
-				type: propertyType,
-				unit: property.properties.unit,
-				description: property.properties.description,
-				value: propertyValue,
-				createdAt: property.properties.createdAt,
-				updatedAt: property.properties.updatedAt
-			};
-		}
-
-		return deviceProperties;
-	}
-
 	async getAllProperties(): Promise<Property[]> {
 		const properties = await db.query.propertiesTable.findMany();
-		return properties.map((p) => selectPropertySchema.parse(p));
+		return properties.map((p) => new Property(selectPropertySchema.parse(p), this));
+	}
+
+	async getPropertyById(id: string): Promise<Property | null> {
+		const result = await db
+			.select()
+			.from(propertiesTable)
+			.where(eq(propertiesTable.id, id))
+			.execute();
+
+		if (result.length === 0) {
+			return null;
+		}
+
+		return new Property(selectPropertySchema.parse(result[0]), this);
 	}
 
 	async updateProperty(id: string, propertyData: UpdateProperty): Promise<Property | null> {
@@ -67,7 +46,7 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 			return null;
 		}
 
-		return selectPropertySchema.parse(result[0]);
+		return new Property(selectPropertySchema.parse(result[0]), this);
 	}
 
 	async deleteProperty(id: string): Promise<boolean> {
@@ -79,6 +58,29 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 			console.error('Failed to delete property:', error);
 			throw error;
 		}
+	}
+
+	async getPropertyValueForDevice(
+		propertyId: string,
+		deviceId: number
+	): Promise<string | number | boolean | null> {
+		const property = await db
+			.select()
+			.from(devicePropertiesTable)
+			.where(
+				and(
+					eq(devicePropertiesTable.propertyId, propertyId),
+					eq(devicePropertiesTable.deviceId, deviceId)
+				)
+			)
+			.limit(1)
+			.execute();
+
+		if (property.length === 0) {
+			return null;
+		}
+
+		return this.extractPropertyValue(property[0]);
 	}
 
 	// Helper function to extract the correct value based on type

@@ -9,6 +9,7 @@ import type {
 	PaginatedDevices,
 	VariantWithOptions
 } from '@smart-home-finder/common/types';
+import { Property } from '../properties/property';
 
 describe('DeviceService', () => {
 	let deviceService: DeviceService;
@@ -47,22 +48,26 @@ describe('DeviceService', () => {
 				options: []
 			}
 		];
-		const mockProperties = {
-			property1: {
-				id: 'property1',
-				name: 'Property 1',
-				type: 'string',
-				value: 'Value 1',
-				unit: null,
-				description: null
-			}
-		};
+		const mockProperties = [
+			new Property(
+				{
+					id: 'property1',
+					name: 'Property 1',
+					type: 'string',
+					unit: null,
+					description: null,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				},
+				mockPropertyRepository
+			)
+		];
 
 		const mockPrices: ListingWithPrice[] = [];
 
 		mockDeviceRepository.getBaseDeviceById.mockResolvedValue(mockDevice);
 		mockDeviceRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
-		mockPropertyRepository.getPropertiesForDevice.mockResolvedValue(mockProperties);
+		mockPropertyRepository.getAllProperties.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
 
 		const result = await deviceService.getDeviceById(deviceId);
@@ -112,12 +117,12 @@ describe('DeviceService', () => {
 			pageSize
 		};
 		const mockVariants: VariantWithOptions[] = [];
-		const mockProperties = {};
+		const mockProperties: Property[] = [];
 		const mockPrices: ListingWithPrice[] = [];
 
 		mockDeviceRepository.getAllDevicesPaginated.mockResolvedValue(mockPaginatedDevices);
 		mockDeviceRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
-		mockPropertyRepository.getPropertiesForDevice.mockResolvedValue(mockProperties);
+		mockPropertyRepository.getAllProperties.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
 
 		const result = await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize);
@@ -126,7 +131,7 @@ describe('DeviceService', () => {
 		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledTimes(
 			mockPaginatedDevices.devices.length
 		);
-		expect(mockPropertyRepository.getPropertiesForDevice).toHaveBeenCalledTimes(
+		expect(mockPropertyRepository.getAllProperties).toHaveBeenCalledTimes(
 			mockPaginatedDevices.devices.length
 		);
 		expect(mockListingRepository.getDevicePrices).toHaveBeenCalledTimes(
@@ -135,10 +140,10 @@ describe('DeviceService', () => {
 
 		expect(result).toEqual({
 			...mockPaginatedDevices,
-			devices: mockPaginatedDevices.devices.map((device) => ({
+			items: mockPaginatedDevices.devices.map((device) => ({
 				...device,
 				variants: mockVariants,
-				properties: mockProperties,
+				properties: {},
 				listings: mockPrices
 			}))
 		});

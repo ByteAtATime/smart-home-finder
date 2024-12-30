@@ -6,6 +6,7 @@ import type { BaseDevice, DeviceProperty, PaginatedDevices } from '@smart-home-f
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
+import { Property } from '$lib/server/properties/property';
 
 const mockDevice = {
 	id: 1,
@@ -44,6 +45,8 @@ describe('devices', () => {
 				listingRepository
 			);
 
+			const mockPropertyClass = new Property(mockDeviceProperties.voltage, propertyRepository);
+
 			const query = { page: 1, pageSize: 10 };
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
 				devices: [mockDevice], // Devices without properties at repository level
@@ -52,7 +55,8 @@ describe('devices', () => {
 				pageSize: query.pageSize
 			} satisfies PaginatedDevices);
 
-			propertyRepository.getPropertiesForDevice = vi.fn().mockResolvedValue(mockDeviceProperties);
+			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
+			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
 
 			const endpoint = await endpoint_GET({ deviceService, query });
 
@@ -64,12 +68,12 @@ describe('devices', () => {
 					protocol: undefined
 				}
 			);
-			expect(propertyRepository.getPropertiesForDevice).toHaveBeenCalledWith(mockDevice.id);
+			expect(propertyRepository.getAllProperties).toHaveBeenCalled();
 			expect(endpoint.status).toBe(200);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 			expect(await endpoint.json()).toEqual({
 				success: true,
-				devices: [resultDevice], // Devices with properties at service level
+				devices: [resultDevice],
 				page: query.page,
 				pageSize: query.pageSize,
 				total: 1

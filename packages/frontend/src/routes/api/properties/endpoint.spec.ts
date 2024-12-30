@@ -2,15 +2,16 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_DELETE, endpoint_GET, endpoint_POST } from './endpoint';
-import type { InsertProperty } from '@smart-home-finder/common/types';
+import { Property } from '$lib/server/properties/property';
+import { endpoint_PATCH } from './endpoint';
 
-const mockProperty: InsertProperty = {
+const mockProperty = {
 	id: 'new-property',
 	name: 'New Property',
 	type: 'string',
 	unit: null,
 	description: null
-};
+} as const;
 
 describe('POST /api/properties', () => {
 	it('should allow an admin to create a property', async () => {
@@ -44,24 +45,30 @@ describe('GET /api/properties', () => {
 	it('should return a list of properties', async () => {
 		const propertyRepository = new MockPropertyRepository();
 		const mockProperties = [
-			{
-				id: 'property1',
-				name: 'Property 1',
-				type: 'string',
-				unit: null,
-				description: null,
-				createdAt: new Date(),
-				updatedAt: new Date()
-			},
-			{
-				id: 'property2',
-				name: 'Property 2',
-				type: 'number',
-				unit: 'unit',
-				description: 'Description',
-				createdAt: new Date(),
-				updatedAt: new Date()
-			}
+			new Property(
+				{
+					id: 'property1',
+					name: 'Property 1',
+					type: 'string',
+					unit: null,
+					description: null,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				},
+				propertyRepository
+			),
+			new Property(
+				{
+					id: 'property2',
+					name: 'Property 2',
+					type: 'float',
+					unit: 'unit',
+					description: 'Description',
+					createdAt: new Date(),
+					updatedAt: new Date()
+				},
+				propertyRepository
+			)
 		];
 
 		propertyRepository.getAllProperties = vi.fn().mockResolvedValue(mockProperties);
@@ -72,7 +79,9 @@ describe('GET /api/properties', () => {
 		expect(endpoint.status).toBe(200);
 		expect(await endpoint.json()).toEqual({
 			success: true,
-			properties: JSON.parse(JSON.stringify(mockProperties))
+			properties: JSON.parse(
+				JSON.stringify(await Promise.all(mockProperties.map((p) => p.toJson())))
+			)
 		});
 	});
 
@@ -94,13 +103,6 @@ describe('GET /api/properties', () => {
 	});
 });
 
-// ./packages/frontend/src/routes/api/properties/endpoint.spec.ts
-
-// ... other imports ...
-import { endpoint_PATCH } from './endpoint';
-
-// ... other test cases ...
-
 describe('PATCH /api/properties/:id', () => {
 	it('should allow an admin to update a property', async () => {
 		const propertyRepository = new MockPropertyRepository();
@@ -108,14 +110,25 @@ describe('PATCH /api/properties/:id', () => {
 		const params = { id: 'property1' };
 		const body = { name: 'Updated Property Name' };
 
-		const updatedProperty = { ...mockProperty, ...body };
+		const updatedProperty = new Property(
+			{
+				...mockProperty,
+				...body,
+				createdAt: new Date(),
+				updatedAt: new Date()
+			},
+			propertyRepository
+		);
 		propertyRepository.updateProperty = vi.fn().mockResolvedValue(updatedProperty);
 
 		const endpoint = await endpoint_PATCH({ authProvider, propertyRepository, params, body });
 
 		expect(propertyRepository.updateProperty).toHaveBeenCalledWith('property1', body);
 		expect(endpoint.status).toBe(200);
-		expect(await endpoint.json()).toEqual({ success: true, property: updatedProperty });
+		expect(await endpoint.json()).toEqual({
+			success: true,
+			property: JSON.parse(JSON.stringify(await updatedProperty.toJson()))
+		});
 	});
 
 	it('should return 401 if the user is not an admin', async () => {

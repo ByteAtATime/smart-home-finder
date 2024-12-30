@@ -1,15 +1,25 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresPropertyRepository } from './postgres';
 import type { InsertProperty } from '@smart-home-finder/common/types';
+import { Property } from './property';
 
 const mockDb = vi.hoisted(() => ({
+	query: {
+		propertiesTable: {
+			findMany: vi.fn()
+		}
+	},
 	insert: vi.fn().mockReturnThis(),
 	values: vi.fn().mockReturnThis(),
 	returning: vi.fn().mockReturnThis(),
 	select: vi.fn().mockReturnThis(),
 	from: vi.fn().mockReturnThis(),
 	leftJoin: vi.fn().mockReturnThis(),
-	where: vi.fn().mockReturnThis()
+	where: vi.fn().mockReturnThis(),
+	update: vi.fn().mockReturnThis(),
+	set: vi.fn().mockReturnThis(),
+	delete: vi.fn().mockReturnThis(),
+	execute: vi.fn().mockReturnThis()
 }));
 
 vi.mock('$lib/server/db', () => ({
@@ -43,137 +53,131 @@ describe('PostgresPropertyRepository', () => {
 		expect(result).toBe(returnedProperty.id);
 	});
 
-	it('should get properties for a device', async () => {
-		const deviceId = 1;
+	it('should get all properties', async () => {
 		const mockProperties = [
 			{
-				properties: {
-					id: 'property1',
-					name: 'Property 1',
-					type: 'int',
-					unit: 'unit',
-					description: 'Description 1'
-				},
-				device_properties: {
-					propertyId: 'property1',
-					intValue: 123,
-					floatValue: null,
-					stringValue: null,
-					booleanValue: null
-				}
-			},
-			{
-				properties: {
-					id: 'property2',
-					name: 'Property 2',
-					type: 'string',
-					unit: null,
-					description: null
-				},
-				device_properties: {
-					propertyId: 'property2',
-					intValue: null,
-					floatValue: null,
-					stringValue: 'value',
-					booleanValue: null
-				}
-			}
-		];
-		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
-
-		const result = await repository.getPropertiesForDevice(deviceId);
-
-		expect(mockDb.select).toHaveBeenCalled();
-		expect(mockDb.where).toHaveBeenCalled();
-		expect(result).toEqual({
-			property1: {
 				id: 'property1',
 				name: 'Property 1',
 				type: 'int',
 				unit: 'unit',
 				description: 'Description 1',
-				value: 123
+				createdAt: new Date(),
+				updatedAt: new Date()
 			},
-			property2: {
+			{
 				id: 'property2',
 				name: 'Property 2',
 				type: 'string',
 				unit: null,
 				description: null,
-				value: 'value'
-			}
-		});
-	});
-
-	it('should handle properties with null values', async () => {
-		const deviceId = 1;
-		const mockProperties = [
-			{
-				properties: {
-					id: 'property1',
-					name: 'Property 1',
-					type: 'int',
-					unit: 'unit',
-					description: 'Description 1'
-				},
-				device_properties: {
-					propertyId: 'property1',
-					intValue: null,
-					floatValue: null,
-					stringValue: null,
-					booleanValue: null
-				}
+				createdAt: new Date(),
+				updatedAt: new Date()
 			}
 		];
-		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
+		mockDb.query.propertiesTable.findMany.mockResolvedValue(mockProperties);
 
-		const result = await repository.getPropertiesForDevice(deviceId);
+		const result = await repository.getAllProperties();
 
-		expect(result).toEqual({});
+		expect(mockDb.query.propertiesTable.findMany).toHaveBeenCalled();
+		expect(result).toEqual(
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			mockProperties.map((p) => new Property(p as any, repository))
+		);
 	});
 
-	it('should handle properties with boolean type', async () => {
-		const deviceId = 1;
-		const mockProperties = [
-			{
-				properties: {
-					id: 'property3',
-					name: 'Property 3',
-					type: 'boolean',
-					unit: null,
-					description: null
-				},
-				device_properties: {
-					propertyId: 'property3',
-					intValue: null,
-					floatValue: null,
-					stringValue: null,
-					booleanValue: true
-				}
-			}
-		];
-		mockDb.select().from().leftJoin().where.mockResolvedValue(mockProperties);
+	it('should get property by id', async () => {
+		const propertyId = 'property1';
+		const mockProperty = {
+			id: propertyId,
+			name: 'Property 1',
+			type: 'int',
+			unit: 'unit',
+			description: 'Description 1',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		mockDb.select.mockReturnThis();
+		mockDb.select().from.mockReturnThis();
+		mockDb.select().from().where().execute.mockResolvedValue([mockProperty]);
 
-		const result = await repository.getPropertiesForDevice(deviceId);
+		const result = await repository.getPropertyById(propertyId);
 
-		expect(result).toEqual({
-			property3: {
-				id: 'property3',
-				name: 'Property 3',
-				type: 'boolean',
-				unit: null,
-				description: null,
-				value: true
-			}
-		});
+		expect(mockDb.select).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		expect(result).toEqual(new Property(mockProperty as any, repository));
 	});
 
-	it('should return empty object if no properties found', async () => {
-		const deviceId = 1;
-		mockDb.select().from().leftJoin().where.mockResolvedValue([]);
+	it('should return null if property by id not found', async () => {
+		const propertyId = 'nonexistent';
+		mockDb.select.mockReturnThis();
+		mockDb.select().from.mockReturnThis();
+		mockDb.select().from().where.mockReturnThis();
+		mockDb.select().from().where().execute.mockResolvedValue([]);
 
-		const result = await repository.getPropertiesForDevice(deviceId);
+		const result = await repository.getPropertyById(propertyId);
 
-		expect(result).toEqual({});
+		expect(mockDb.select).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		expect(result).toBeNull();
+	});
+
+	it('should update a property', async () => {
+		const propertyId = 'property1';
+		const updateData = { name: 'Updated Property' };
+		const updatedProperty = {
+			id: propertyId,
+			name: 'Updated Property',
+			type: 'int',
+			unit: 'unit',
+			description: 'Description 1',
+			createdAt: new Date(),
+			updatedAt: new Date()
+		};
+		mockDb.update().set().where().returning.mockResolvedValue([updatedProperty]);
+
+		const result = await repository.updateProperty(propertyId, updateData);
+
+		expect(mockDb.update).toHaveBeenCalled();
+		expect(mockDb.set).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		expect(mockDb.returning).toHaveBeenCalled();
+		expect(result).toEqual(new Property(updatedProperty as any, repository)); // Cast to any for simplicity
+	});
+
+	it('should return null if property to update is not found', async () => {
+		const propertyId = 'nonexistent';
+		const updateData = { name: 'Updated Property' };
+		mockDb.update().set().where().returning.mockResolvedValue([]);
+
+		const result = await repository.updateProperty(propertyId, updateData);
+
+		expect(mockDb.update).toHaveBeenCalled();
+		expect(mockDb.set).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		expect(mockDb.returning).toHaveBeenCalled();
+		expect(result).toBeNull();
+	});
+
+	it('should delete a property', async () => {
+		const propertyId = 'property1';
+		mockDb.delete().where.mockResolvedValue([{}]);
+
+		const result = await repository.deleteProperty(propertyId);
+
+		expect(mockDb.delete).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		expect(result).toBe(true);
+	});
+
+	it('should return false if property to delete is not found', async () => {
+		const propertyId = 'nonexistent';
+		mockDb.delete().where.mockResolvedValue([]);
+
+		const result = await repository.deleteProperty(propertyId);
+
+		expect(mockDb.delete).toHaveBeenCalled();
+		expect(mockDb.where).toHaveBeenCalled();
+		expect(result).toBe(false);
 	});
 });

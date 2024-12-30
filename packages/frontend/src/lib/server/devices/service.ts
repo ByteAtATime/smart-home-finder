@@ -1,13 +1,14 @@
 import type {
-	DeviceProperties,
 	ListingWithPrice,
-	PaginatedDevicesWithDetails,
-	Variant
+	Paginated,
+	Variant,
+	Property as PropertyData
 } from '@smart-home-finder/common/types';
 import type { IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
-import { Device } from './device';
+import { Device, type DeviceJson } from './device';
+import type { Property } from '../properties/property';
 
 export class DeviceService {
 	constructor(
@@ -20,8 +21,8 @@ export class DeviceService {
 		return await this.deviceRepository.getVariantsForDevice(id);
 	}
 
-	async getDeviceProperties(id: number): Promise<DeviceProperties> {
-		return await this.propertyRepository.getPropertiesForDevice(id);
+	async getAllProperties(): Promise<Property[]> {
+		return await this.propertyRepository.getAllProperties();
 	}
 
 	async getDeviceListings(id: number): Promise<ListingWithPrice[]> {
@@ -39,7 +40,7 @@ export class DeviceService {
 		page: number,
 		pageSize: number,
 		filters: { deviceType?: string[]; protocol?: string[] } = {}
-	): Promise<PaginatedDevicesWithDetails> {
+	): Promise<Paginated<DeviceJson>> {
 		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(
 			page,
 			pageSize,
@@ -47,13 +48,27 @@ export class DeviceService {
 		);
 		const devicesWithVariantsAndProperties = await Promise.all(
 			paginatedDevices.devices.map(async (device) => {
-				const variants = await this.deviceRepository.getVariantsForDevice(device.id);
-				const properties = await this.propertyRepository.getPropertiesForDevice(device.id);
-				const prices = await this.listingRepository.getDevicePrices(device.id);
-				return { ...device, variants, properties, listings: prices };
+				const deviceInstance = new Device(device, this);
+				const variants = await deviceInstance.getVariants();
+				const properties = await deviceInstance.getProperties();
+				const listings = await deviceInstance.getListings();
+
+				const jsonProperties = await Promise.all(
+					properties.map((property) => property.toJson(device.id))
+				);
+
+				const propertiesById = jsonProperties.reduce(
+					(acc, property) => {
+						acc[property.id] = property;
+						return acc;
+					},
+					{} as Record<string, PropertyData>
+				);
+
+				return { ...device, variants, properties: propertiesById, listings: listings };
 			})
 		);
 
-		return { ...paginatedDevices, devices: devicesWithVariantsAndProperties };
+		return { ...paginatedDevices, items: devicesWithVariantsAndProperties };
 	}
 }

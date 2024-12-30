@@ -6,6 +6,7 @@ import {
 	type DeviceProtocol,
 	type DeviceType,
 	type InsertDevice,
+	type Paginated,
 	type PaginatedDevices,
 	type UpdateDevice,
 	type Variant,
@@ -29,7 +30,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		page: number,
 		pageSize: number,
 		filters: { deviceType?: string[]; protocol?: string[] } = {}
-	): Promise<PaginatedDevices> {
+	): Promise<Paginated<BaseDevice>> {
 		const offset = (page - 1) * pageSize;
 
 		const query = db.select().from(devicesTable).offset(offset).limit(pageSize);
@@ -52,7 +53,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		const total = totalResult[0].value;
 
 		return {
-			devices,
+			items: devices,
 			total,
 			page,
 			pageSize

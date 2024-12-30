@@ -30,7 +30,8 @@ export const endpoint_GET: EndpointHandler<{
 }> = async ({ propertyRepository }) => {
 	try {
 		const properties = await propertyRepository.getAllProperties();
-		return json({ success: true, properties });
+		const propertiesJson = await Promise.all(properties.map((property) => property.toJson()));
+		return json({ success: true, properties: propertiesJson });
 	} catch (error) {
 		console.error('Failed to get properties:', error);
 		return json({ success: false, error: 'Failed to get properties' }, { status: 500 });
@@ -57,7 +58,7 @@ export const endpoint_PATCH: EndpointHandler<{
 			return json({ success: false, error: 'Property not found' }, { status: 404 });
 		}
 
-		return json({ success: true, property: updatedProperty });
+		return json({ success: true, property: await updatedProperty.toJson() });
 	} catch (error) {
 		console.error('Failed to update property:', error);
 		return json({ success: false, error: 'Failed to update property' }, { status: 500 });

@@ -6,6 +6,7 @@ import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
 import { MockAuthProvider } from '$lib/server/auth/mock';
+import { Property } from '$lib/server/properties/property';
 
 const mockDevice = {
 	id: 1,
@@ -45,8 +46,11 @@ describe('GET /api/devices/:id', () => {
 
 		const params = { id: '1' };
 
+		const mockPropertyClass = new Property(mockDeviceProperties.voltage, propertyRepository);
+
 		deviceRepository.getBaseDeviceById = vi.fn().mockResolvedValue(mockDevice);
-		propertyRepository.getPropertiesForDevice = vi.fn().mockResolvedValue(mockDeviceProperties);
+		propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
+		propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 		listingRepository.getDevicePrices = vi.fn().mockResolvedValue([]);
 
 		const endpoint = await endpoint_GET({ deviceService, params });

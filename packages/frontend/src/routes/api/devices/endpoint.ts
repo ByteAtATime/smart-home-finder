@@ -3,10 +3,7 @@ import { type DeviceService } from '$lib/server/devices/service';
 import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
-import {
-	insertDeviceSchema,
-	type PaginatedDevicesWithDetails
-} from '@smart-home-finder/common/types';
+import { insertDeviceSchema } from '@smart-home-finder/common/types';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -53,18 +50,21 @@ export const endpoint_GET: EndpointHandler<{
 }> = async ({ deviceService, query }) => {
 	const { page, pageSize, deviceType, protocol } = query;
 
-	const paginatedDevices: PaginatedDevicesWithDetails =
-		await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize, {
+	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
+		page,
+		pageSize,
+		{
 			deviceType: deviceType ? deviceType.split(',') : undefined,
 			protocol: protocol ? protocol.split(',') : undefined
-		});
+		}
+	);
 
 	return json({
 		success: true,
 		total: paginatedDevices.total,
 		pageSize,
 		page,
-		devices: paginatedDevices.devices
+		devices: paginatedDevices.items
 	});
 };
 

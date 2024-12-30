@@ -79,7 +79,7 @@ describe('PostgresDeviceRepository', () => {
 			const result = await repository.getAllDevicesPaginated(1, 10);
 
 			expect(result).toEqual({
-				devices: mockDevices,
+				items: mockDevices,
 				total: mockTotal[0].value,
 				page: 1,
 				pageSize: 10
