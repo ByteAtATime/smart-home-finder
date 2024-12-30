@@ -114,7 +114,7 @@
 </script>
 
 <div class="relative">
-	<div class="flex flex-col gap-4 p-4 lg:flex-row">
+	<div class="flex flex-col items-start gap-4 p-4 lg:flex-row">
 		<div class="flex w-40 flex-col gap-2">
 			<h2 class="text-lg font-bold">Protocol</h2>
 
@@ -234,7 +234,7 @@
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">
+							<Table.Cell colspan={columns.length + 1} class="h-24 text-center">
 								No devices found.
 							</Table.Cell>
 						</Table.Row>
