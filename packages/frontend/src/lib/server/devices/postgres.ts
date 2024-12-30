@@ -26,7 +26,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string; protocol?: string } = {}
+		filters: { deviceType?: string[]; protocol?: string[] } = {}
 	): Promise<PaginatedDevices> {
 		const offset = (page - 1) * pageSize;
 
@@ -34,12 +34,10 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 
 		const whereConditions = [];
 		if (filters.deviceType) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			whereConditions.push(eq(devicesTable.deviceType, filters.deviceType as any));
+			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType));
 		}
 		if (filters.protocol) {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			whereConditions.push(eq(devicesTable.protocol, filters.protocol as any));
+			whereConditions.push(inArray(devicesTable.protocol, filters.protocol));
 		}
 
 		if (whereConditions.length > 0) {

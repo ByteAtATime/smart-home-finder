@@ -1,11 +1,23 @@
 <script lang="ts">
-	import { getCoreRowModel, getPaginationRowModel } from '@tanstack/table-core';
-	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table';
+	import { getCoreRowModel, getPaginationRowModel, type ColumnDef } from '@tanstack/table-core';
+	import {
+		createSvelteTable,
+		FlexRender,
+		renderComponent,
+		renderSnippet
+	} from '$lib/components/ui/data-table';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import * as Pagination from '$lib/components/ui/pagination';
 	import { goto } from '$app/navigation';
 	import Spinner from './Spinner.svelte';
 	import type { DeviceWithDetails } from '@smart-home-finder/common/types';
+	import { createRawSnippet } from 'svelte';
+	import Badge from './ui/badge/badge.svelte';
+	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
+	import Button from './ui/button/button.svelte';
+	import { Checkbox } from './ui/checkbox';
+	import { Label } from './ui/label';
+	import { navigating } from '$app/state';
 
 	type DeviceTableProps = {
 		devices: DeviceWithDetails[];
@@ -20,26 +32,74 @@
 	let isLoading = $state(false);
 	let spinnerPromise: Promise<unknown> | null = $state(null);
 
+	let protocolFilter = $state(
+		Object.fromEntries(
+			Object.entries(PROTOCOL_DISPLAY_NAMES).map(([protocol]) => [protocol, false])
+		)
+	);
+	let deviceTypeFilter = $state(
+		Object.fromEntries(Object.entries(DEVICE_TYPES).map(([deviceType]) => [deviceType, false]))
+	);
+
+	$effect(() => {
+		isLoading = true;
+		spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125));
+
+		goto(
+			`?page=${page}&pageSize=${pageSize}&protocol=${Object.entries(protocolFilter)
+				.filter(([_, value]) => value)
+				.map(([protocol]) => protocol)
+				.join(',')}&deviceType=${Object.entries(deviceTypeFilter)
+				.filter(([_, value]) => value)
+				.map(([deviceType]) => deviceType)
+				.join(',')}`
+		);
+	});
+
 	$effect(() => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- this makes it reactive
-		page;
+		[devices];
 
 		isLoading = false;
 		spinnerPromise = null;
 	});
 
-	const columns = [
+	const columns: ColumnDef<DeviceWithDetails>[] = [
 		{
 			header: 'Name',
-			accessorKey: 'name'
+			accessorKey: 'name',
+			cell: ({ row }) => {
+				const snippet = createRawSnippet(() => ({
+					render: () =>
+						`<a href="/devices/${row.original.id}" class="font-bold hover:text-blue-700 transition-colors duration-75 dark:hover:text-blue-300">${row.original.name}</a>`
+				}));
+
+				return renderSnippet(snippet, []);
+			}
 		},
 		{
 			header: 'Device Type',
-			accessorKey: 'deviceType'
+			accessorKey: 'deviceType',
+			cell: ({ row }) => {
+				return renderComponent(Badge, {
+					variant: 'default',
+					children: createRawSnippet(() => ({
+						render: () => DEVICE_TYPES[row.original.deviceType] ?? row.original.deviceType
+					}))
+				});
+			}
 		},
 		{
 			header: 'Protocol',
-			accessorKey: 'protocol'
+			accessorKey: 'protocol',
+			cell: ({ row }) => {
+				return renderComponent(Badge, {
+					variant: 'secondary',
+					children: createRawSnippet(() => ({
+						render: () => PROTOCOL_DISPLAY_NAMES[row.original.protocol] ?? row.original.protocol
+					}))
+				});
+			}
 		}
 	];
 
@@ -54,8 +114,88 @@
 </script>
 
 <div class="relative">
-	<div>
-		<div class="rounded-md border">
+	<div class="flex flex-col gap-4 p-4 lg:flex-row">
+		<div class="flex w-40 flex-col gap-2">
+			<h2 class="text-lg font-bold">Protocol</h2>
+
+			<div class="flex items-center gap-2">
+				<Checkbox
+					id="all"
+					checked={Object.values(protocolFilter).every((value) => !value)}
+					onCheckedChange={() => {
+						protocolFilter = Object.fromEntries(
+							Object.entries(protocolFilter).map(([protocol, value]) => [protocol, false])
+						);
+					}}
+					aria-labelledby="all"
+				/>
+				<Label
+					id="all"
+					for="all"
+					class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+				>
+					All
+				</Label>
+			</div>
+
+			{#each Object.entries(PROTOCOL_DISPLAY_NAMES) as [protocol, displayName]}
+				<div class="flex items-center gap-2">
+					<Checkbox
+						id={protocol}
+						bind:checked={protocolFilter[protocol]}
+						aria-labelledby={protocol}
+					/>
+					<Label
+						id={protocol}
+						for={protocol}
+						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+					>
+						{displayName}
+					</Label>
+				</div>
+			{/each}
+
+			<h2 class="mt-4 text-lg font-bold">Device Type</h2>
+
+			<div class="flex items-center gap-2">
+				<Checkbox
+					id="all"
+					checked={Object.values(deviceTypeFilter).every((value) => !value)}
+					onCheckedChange={() => {
+						deviceTypeFilter = Object.fromEntries(
+							Object.entries(deviceTypeFilter).map(([deviceType]) => [deviceType, false])
+						);
+					}}
+					aria-labelledby="all"
+				/>
+				<Label
+					id="all"
+					for="all"
+					class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+				>
+					All
+				</Label>
+			</div>
+
+			{#each Object.entries(DEVICE_TYPES) as [deviceType, displayName]}
+				<div class="flex items-center gap-2">
+					<Checkbox
+						id={deviceType}
+						bind:checked={deviceTypeFilter[deviceType]}
+						aria-labelledby={deviceType}
+					/>
+					<Label
+						id={deviceType}
+						for={deviceType}
+						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+					>
+						{displayName}
+					</Label>
+				</div>
+			{/each}
+		</div>
+
+		<div class="w-full rounded-md border">
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
@@ -107,9 +247,7 @@
 				perPage={pageSize}
 				{page}
 				onPageChange={(p) => {
-					isLoading = true;
-					spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125));
-					goto(`?page=${p}&pageSize=${pageSize}`);
+					page = p;
 				}}
 			>
 				{#snippet children({ pages, currentPage })}
@@ -139,7 +277,7 @@
 		</div>
 	</div>
 
-	{#if isLoading}
+	{#if isLoading && navigating.to}
 		{#await spinnerPromise then _}
 			<div
 				class="bg-background absolute inset-0 flex items-center justify-center bg-opacity-25 backdrop-blur-sm"

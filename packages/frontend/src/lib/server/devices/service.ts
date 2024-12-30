@@ -38,7 +38,7 @@ export class DeviceService {
 	async getAllDevicesWithVariantsAndProperties(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string; protocol?: string } = {}
+		filters: { deviceType?: string[]; protocol?: string[] } = {}
 	): Promise<PaginatedDevicesWithDetails> {
 		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(
 			page,

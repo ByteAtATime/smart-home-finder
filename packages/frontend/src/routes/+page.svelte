@@ -4,10 +4,10 @@
 
 	let { data } = $props();
 	const { devices, total, pageSize, page } = $derived(data);
-
-	const properties = ['voltage'];
 </script>
 
 <ThemeToggle />
 
-<DeviceTable {devices} {total} {pageSize} {page} {properties} />
+<main class="mx-auto max-w-screen-lg p-4">
+	<DeviceTable {devices} {total} {pageSize} {page} properties={[]} />
+</main>

@@ -15,7 +15,7 @@ export interface IDeviceRepository {
 	getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string; protocol?: string }
+		filters: { deviceType?: string[]; protocol?: string[] }
 	): Promise<PaginatedDevices>;
 	getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]>;
 }

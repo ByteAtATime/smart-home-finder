@@ -13,8 +13,38 @@ import { z } from 'zod';
 export const querySchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
 	pageSize: z.coerce.number().min(1).max(100).optional().default(10),
-	deviceType: z.enum(deviceTypeEnum.enumValues).optional(),
-	protocol: z.enum(protocolEnum.enumValues).optional()
+	deviceType: z
+		.string()
+		.refine(
+			(value) => {
+				const parts = value.split(',');
+				return parts.every((part) =>
+					(Object.values(deviceTypeEnum.enumValues) as string[]).includes(part)
+				);
+			},
+			{
+				message:
+					'Each value must be one of: ' +
+					(Object.values(deviceTypeEnum.enumValues) as string[]).join(', ')
+			}
+		)
+		.optional(),
+	protocol: z
+		.string()
+		.refine(
+			(value) => {
+				const parts = value.split(',');
+				return parts.every((part) =>
+					(Object.values(protocolEnum.enumValues) as string[]).includes(part)
+				);
+			},
+			{
+				message:
+					'Each value must be one of: ' +
+					(Object.values(protocolEnum.enumValues) as string[]).join(', ')
+			}
+		)
+		.optional()
 });
 
 export const endpoint_GET: EndpointHandler<{
@@ -25,8 +55,8 @@ export const endpoint_GET: EndpointHandler<{
 
 	const paginatedDevices: PaginatedDevicesWithDetails =
 		await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize, {
-			deviceType,
-			protocol
+			deviceType: deviceType ? deviceType.split(',') : undefined,
+			protocol: protocol ? protocol.split(',') : undefined
 		});
 
 	return json({
