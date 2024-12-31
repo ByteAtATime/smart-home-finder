@@ -1,17 +1,22 @@
 import { db } from '../db';
 import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/common/schema';
 import type { IPropertyRepository } from './types';
-import {
-	selectPropertySchema,
-	type InsertProperty,
-	type UpdateProperty
-} from '@smart-home-finder/common/types';
+import { selectPropertySchema, type UpdateProperty } from '@smart-home-finder/common/types';
 import { eq, sql, and } from 'drizzle-orm';
 import { Property } from './property';
 
 export class PostgresPropertyRepository implements IPropertyRepository {
-	async insertProperty(property: InsertProperty): Promise<string> {
-		const [newProperty] = await db.insert(propertiesTable).values(property).returning();
+	async insertProperty(property: Property): Promise<string> {
+		const [newProperty] = await db
+			.insert(propertiesTable)
+			.values({
+				id: property.id,
+				name: property.name,
+				type: property.type,
+				unit: property.unit,
+				description: property.description
+			})
+			.returning();
 
 		return newProperty.id;
 	}

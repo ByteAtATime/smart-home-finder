@@ -80,7 +80,6 @@ export type DeviceProtocol = (typeof protocolEnum.enumValues)[number];
 
 export type UpdateDevice = z.infer<typeof updateDeviceSchema>;
 export type PropertyData = z.infer<typeof selectPropertySchema>;
-export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type UpdateProperty = z.infer<typeof updatePropertySchema>;
 export type SelectDeviceProperty = z.infer<typeof selectDevicePropertySchema>;
 export type Seller = z.infer<typeof selectSellerSchema>;
