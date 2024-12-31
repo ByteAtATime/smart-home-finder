@@ -6,7 +6,7 @@ import { MockListingRepository } from '../listings/mock';
 import type {
 	BaseDevice,
 	ListingWithPrice,
-	PaginatedDevices,
+	Paginated,
 	VariantWithOptions
 } from '@smart-home-finder/common/types';
 import { Property } from '../properties/property';
@@ -91,8 +91,8 @@ describe('DeviceService', () => {
 	it('should get all devices with variants and properties', async () => {
 		const page = 1;
 		const pageSize = 10;
-		const mockPaginatedDevices: PaginatedDevices = {
-			devices: [
+		const mockPaginatedDevices: Paginated<BaseDevice> = {
+			items: [
 				{
 					id: 1,
 					name: 'Device 1',
@@ -129,18 +129,18 @@ describe('DeviceService', () => {
 
 		expect(mockDeviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(page, pageSize, {});
 		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledTimes(
-			mockPaginatedDevices.devices.length
+			mockPaginatedDevices.items.length
 		);
 		expect(mockPropertyRepository.getAllProperties).toHaveBeenCalledTimes(
-			mockPaginatedDevices.devices.length
+			mockPaginatedDevices.items.length
 		);
 		expect(mockListingRepository.getDevicePrices).toHaveBeenCalledTimes(
-			mockPaginatedDevices.devices.length
+			mockPaginatedDevices.items.length
 		);
 
 		expect(result).toEqual({
 			...mockPaginatedDevices,
-			items: mockPaginatedDevices.devices.map((device) => ({
+			items: mockPaginatedDevices.items.map((device) => ({
 				...device,
 				variants: mockVariants,
 				properties: {},
