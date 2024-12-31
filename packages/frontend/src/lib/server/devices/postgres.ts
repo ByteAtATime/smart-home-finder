@@ -2,7 +2,7 @@ import { count, eq, and, sql, inArray } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	variantWithOptionsSchema,
-	type BaseDevice,
+	type DeviceData,
 	type DeviceProtocol,
 	type DeviceType,
 	type Paginated,
@@ -20,7 +20,7 @@ import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
 export class PostgresDeviceRepository implements IDeviceRepository {
-	async getAllDevices(): Promise<BaseDevice[]> {
+	async getAllDevices(): Promise<DeviceData[]> {
 		return await db.query.devicesTable.findMany();
 	}
 
@@ -28,7 +28,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		page: number,
 		pageSize: number,
 		filters: { deviceType?: string[]; protocol?: string[] } = {}
-	): Promise<Paginated<BaseDevice>> {
+	): Promise<Paginated<DeviceData>> {
 		const offset = (page - 1) * pageSize;
 
 		const query = db.select().from(devicesTable).offset(offset).limit(pageSize);
@@ -63,7 +63,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return result.length > 0;
 	}
 
-	async getBaseDeviceById(id: number): Promise<BaseDevice | null> {
+	async getBaseDeviceById(id: number): Promise<DeviceData | null> {
 		const device =
 			(await db.query.devicesTable.findFirst({
 				where: eq(devicesTable.id, id)
@@ -72,7 +72,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return selectDeviceSchema.nullable().parse(device);
 	}
 
-	async insertDevice(device: BaseDevice): Promise<number> {
+	async insertDevice(device: DeviceData): Promise<number> {
 		const result = await db
 			.insert(devicesTable)
 			.values({
@@ -90,7 +90,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return result[0].insertedId;
 	}
 
-	async updateDevice(id: number, device: UpdateDevice): Promise<BaseDevice | null> {
+	async updateDevice(id: number, device: UpdateDevice): Promise<DeviceData | null> {
 		const result = await db
 			.update(devicesTable)
 			.set({ ...device, updatedAt: sql`CURRENT_TIMESTAMP` })

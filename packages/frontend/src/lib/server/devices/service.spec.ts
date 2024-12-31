@@ -4,7 +4,7 @@ import { MockDeviceRepository } from './mock';
 import { MockPropertyRepository } from '../properties/mock';
 import { MockListingRepository } from '../listings/mock';
 import type {
-	BaseDevice,
+	DeviceData,
 	ListingWithPrice,
 	Paginated,
 	VariantWithOptions
@@ -30,7 +30,7 @@ describe('DeviceService', () => {
 
 	it('should get device with variants and properties', async () => {
 		const deviceId = 1;
-		const mockDevice: BaseDevice = {
+		const mockDevice: DeviceData = {
 			id: deviceId,
 			name: 'Test Device',
 			deviceType: 'light',
@@ -91,7 +91,7 @@ describe('DeviceService', () => {
 	it('should get all devices with variants and properties', async () => {
 		const page = 1;
 		const pageSize = 10;
-		const mockPaginatedDevices: Paginated<BaseDevice> = {
+		const mockPaginatedDevices: Paginated<DeviceData> = {
 			items: [
 				{
 					id: 1,

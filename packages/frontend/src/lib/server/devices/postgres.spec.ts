@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresDeviceRepository } from './postgres';
-import type { BaseDevice } from '@smart-home-finder/common/types';
+import type { DeviceData } from '@smart-home-finder/common/types';
 
 const createMockDevice = (id: number) => ({
 	id,
@@ -108,7 +108,7 @@ describe('PostgresDeviceRepository', () => {
 
 	describe('insertDevice', () => {
 		it('should insert device and return id', async () => {
-			const newDevice: BaseDevice = {
+			const newDevice: DeviceData = {
 				id: 0,
 				createdAt: new Date(),
 				updatedAt: new Date(),
@@ -128,7 +128,7 @@ describe('PostgresDeviceRepository', () => {
 		});
 
 		it('should throw error when insert fails', async () => {
-			const newDevice: BaseDevice = {
+			const newDevice: DeviceData = {
 				id: 0,
 				createdAt: new Date(),
 				updatedAt: new Date(),

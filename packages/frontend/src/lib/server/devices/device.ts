@@ -1,5 +1,5 @@
 import type {
-	BaseDevice,
+	DeviceData,
 	ListingWithPrice,
 	Variant,
 	Property as PropertyData,
@@ -9,7 +9,7 @@ import type {
 import type { DeviceService } from './service';
 import type { Property } from '../properties/property';
 
-export type DeviceJson = BaseDevice & {
+export type DeviceJson = DeviceData & {
 	variants: Variant[];
 	properties: Record<string, PropertyData>;
 	listings: ListingWithPrice[];
@@ -17,7 +17,7 @@ export type DeviceJson = BaseDevice & {
 
 export class Device {
 	public constructor(
-		private data: BaseDevice,
+		private data: DeviceData,
 		private service: DeviceService
 	) {}
 

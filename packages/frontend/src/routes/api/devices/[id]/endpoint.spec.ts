@@ -1,7 +1,7 @@
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_DELETE, endpoint_GET, endpoint_PATCH } from './endpoint';
-import type { BaseDevice, DeviceProperty } from '@smart-home-finder/common/types';
+import type { DeviceData, DeviceProperty } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
@@ -16,7 +16,7 @@ const mockDevice = {
 	protocol: 'zwave',
 	createdAt: new Date(),
 	updatedAt: new Date()
-} satisfies BaseDevice;
+} satisfies DeviceData;
 const mockDeviceProperties = {
 	voltage: {
 		id: 'voltage',

@@ -144,7 +144,7 @@ export const deviceWithListingsSchema = selectDeviceSchema.extend({
 	)
 });
 
-export type BaseDevice = z.infer<typeof selectDeviceSchema>;
+export type DeviceData = z.infer<typeof selectDeviceSchema>;
 
 export type DeviceProperty = z.infer<typeof devicePropertyValueSchema>;
 
@@ -155,7 +155,7 @@ export type ListingWithPrice = z.infer<typeof currentPriceSchema>;
 export type DeviceWithListings = z.infer<typeof deviceWithListingsSchema>;
 
 export type PaginatedDevices = {
-	devices: BaseDevice[];
+	devices: DeviceData[];
 	total: number;
 	page: number;
 	pageSize: number;

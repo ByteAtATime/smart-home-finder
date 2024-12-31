@@ -2,7 +2,7 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET, endpoint_POST } from './endpoint';
-import type { BaseDevice, DeviceProperty, Paginated } from '@smart-home-finder/common/types';
+import type { DeviceData, DeviceProperty, Paginated } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
@@ -16,7 +16,7 @@ const mockDevice = {
 	createdAt: new Date(),
 	updatedAt: new Date(),
 	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg']
-} satisfies BaseDevice;
+} satisfies DeviceData;
 const mockDeviceProperties = {
 	voltage: {
 		id: 'voltage',
@@ -53,7 +53,7 @@ describe('devices', () => {
 				total: 1,
 				page: query.page,
 				pageSize: query.pageSize
-			} satisfies Paginated<BaseDevice>);
+			} satisfies Paginated<DeviceData>);
 
 			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
