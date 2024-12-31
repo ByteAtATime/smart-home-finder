@@ -1,13 +1,13 @@
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_DELETE, endpoint_GET, endpoint_PATCH } from './endpoint';
-import type { DeviceData, DeviceProperty } from '@smart-home-finder/common/types';
+import type { DeviceData } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
 import { MockAuthProvider } from '$lib/server/auth/mock';
 import { Property } from '$lib/server/properties/property';
-
+import type { Property as PropertyData } from '@smart-home-finder/common/types';
 const mockDevice = {
 	id: 1,
 	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
@@ -23,14 +23,16 @@ const mockDeviceProperties = {
 		name: 'voltage',
 		createdAt: new Date(),
 		updatedAt: new Date(),
-		value: 123.45,
 		type: 'float',
 		unit: 'V',
 		description: null
 	}
-} satisfies Record<string, DeviceProperty>;
+} satisfies Record<string, PropertyData>;
 const resultDevice = JSON.parse(
-	JSON.stringify({ ...mockDevice, properties: mockDeviceProperties })
+	JSON.stringify({
+		...mockDevice,
+		properties: { voltage: { ...mockDeviceProperties.voltage, value: 123.45 } }
+	})
 );
 
 describe('GET /api/devices/:id', () => {
@@ -56,6 +58,9 @@ describe('GET /api/devices/:id', () => {
 		const endpoint = await endpoint_GET({ deviceService, params });
 
 		expect(deviceRepository.getBaseDeviceById).toHaveBeenCalledWith(1);
+		expect(propertyRepository.getAllProperties).toHaveBeenCalledWith();
+		expect(listingRepository.getDevicePrices).toHaveBeenCalledWith(1);
+		expect(propertyRepository.getPropertyValueForDevice).toHaveBeenCalledWith('voltage', 1);
 		expect(endpoint.status).toBe(200);
 		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 		expect(await endpoint.json()).toEqual({

@@ -2,7 +2,11 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET, endpoint_POST } from './endpoint';
-import type { DeviceData, DeviceProperty, Paginated } from '@smart-home-finder/common/types';
+import type {
+	DeviceData,
+	Paginated,
+	Property as PropertyData
+} from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
@@ -23,14 +27,16 @@ const mockDeviceProperties = {
 		name: 'voltage',
 		createdAt: new Date(),
 		updatedAt: new Date(),
-		value: 123.45,
 		type: 'float',
 		unit: 'V',
 		description: null
 	}
-} satisfies Record<string, DeviceProperty>;
+} satisfies Record<string, PropertyData>;
 const resultDevice = JSON.parse(
-	JSON.stringify({ ...mockDevice, properties: mockDeviceProperties })
+	JSON.stringify({
+		...mockDevice,
+		properties: { voltage: { ...mockDeviceProperties.voltage, value: 123.45 } }
+	})
 );
 
 describe('devices', () => {
