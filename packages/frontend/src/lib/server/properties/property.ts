@@ -1,5 +1,5 @@
 import type { IPropertyRepository } from './types';
-import type { Property as PropertyData } from '@smart-home-finder/common/types';
+import type { PropertyData } from '@smart-home-finder/common/types';
 
 export class Property {
 	private _value: string | number | boolean | null = null;

@@ -7,7 +7,7 @@ import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
 import { MockAuthProvider } from '$lib/server/auth/mock';
 import { Property } from '$lib/server/properties/property';
-import type { Property as PropertyData } from '@smart-home-finder/common/types';
+import type { PropertyData } from '@smart-home-finder/common/types';
 const mockDevice = {
 	id: 1,
 	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],

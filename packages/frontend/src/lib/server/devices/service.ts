@@ -2,7 +2,7 @@ import type {
 	ListingWithPrice,
 	Paginated,
 	Variant,
-	Property as PropertyData
+	PropertyData
 } from '@smart-home-finder/common/types';
 import type { IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';

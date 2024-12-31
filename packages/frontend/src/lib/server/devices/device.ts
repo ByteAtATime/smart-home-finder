@@ -2,7 +2,7 @@ import type {
 	DeviceData,
 	ListingWithPrice,
 	Variant,
-	Property as PropertyData,
+	PropertyData,
 	DeviceProtocol,
 	DeviceType
 } from '@smart-home-finder/common/types';

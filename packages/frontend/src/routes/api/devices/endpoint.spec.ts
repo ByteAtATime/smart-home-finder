@@ -2,11 +2,7 @@ import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
 import { endpoint_GET, endpoint_POST } from './endpoint';
-import type {
-	DeviceData,
-	Paginated,
-	Property as PropertyData
-} from '@smart-home-finder/common/types';
+import type { DeviceData, Paginated, PropertyData } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
