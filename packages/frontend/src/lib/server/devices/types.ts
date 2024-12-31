@@ -1,6 +1,5 @@
 import type {
 	BaseDevice,
-	InsertDevice,
 	Paginated,
 	UpdateDevice,
 	VariantWithOptions
@@ -9,7 +8,13 @@ import type {
 export interface IDeviceRepository {
 	getAllDevices(): Promise<BaseDevice[]>;
 	getBaseDeviceById(id: number): Promise<BaseDevice | null>;
-	insertDevice(device: InsertDevice): Promise<number>;
+	/**
+	 * Inserts a new {@link Device} into the database.
+	 *
+	 * @param device - The device to insert. The fields `id`, `createdAt` are ignored.
+	 * @returns The ID of the inserted device.
+	 */
+	insertDevice(device: BaseDevice): Promise<number>;
 	updateDevice(id: number, device: UpdateDevice): Promise<BaseDevice | null>;
 	deleteDevice(id: number): Promise<boolean>;
 	getAllDevicesPaginated(

@@ -2,7 +2,9 @@ import type {
 	BaseDevice,
 	ListingWithPrice,
 	Variant,
-	Property as PropertyData
+	Property as PropertyData,
+	DeviceProtocol,
+	DeviceType
 } from '@smart-home-finder/common/types';
 import type { DeviceService } from './service';
 import type { Property } from '../properties/property';
@@ -15,9 +17,37 @@ export type DeviceJson = BaseDevice & {
 
 export class Device {
 	public constructor(
-		public base: BaseDevice,
+		private data: BaseDevice,
 		private service: DeviceService
 	) {}
+
+	public get id(): number {
+		return this.data.id;
+	}
+
+	public get name(): string {
+		return this.data.name;
+	}
+
+	public get images(): string[] {
+		return this.data.images;
+	}
+
+	public get deviceType(): DeviceType {
+		return this.data.deviceType;
+	}
+
+	public get protocol(): DeviceProtocol {
+		return this.data.protocol;
+	}
+
+	public get createdAt(): Date {
+		return this.data.createdAt;
+	}
+
+	public get updatedAt(): Date {
+		return this.data.updatedAt;
+	}
 
 	private _variants: Variant[] | null = null;
 
@@ -26,7 +56,7 @@ export class Device {
 			return this._variants;
 		}
 
-		this._variants = await this.service.getDeviceVariants(this.base.id);
+		this._variants = await this.service.getDeviceVariants(this.data.id);
 		return this._variants;
 	}
 
@@ -47,7 +77,7 @@ export class Device {
 			return this._listings;
 		}
 
-		this._listings = await this.service.getDeviceListings(this.base.id);
+		this._listings = await this.service.getDeviceListings(this.data.id);
 		return this._listings;
 	}
 
@@ -56,7 +86,7 @@ export class Device {
 
 		const jsonProperties = await Promise.all(
 			properties.map(async (property) => {
-				return property.toJson(this.base.id);
+				return property.toJson(this.data.id);
 			})
 		);
 
@@ -69,7 +99,7 @@ export class Device {
 		);
 
 		return {
-			...this.base,
+			...this.data,
 			variants: await this.getVariants(),
 			properties: propertiesById,
 			listings: await this.getListings()

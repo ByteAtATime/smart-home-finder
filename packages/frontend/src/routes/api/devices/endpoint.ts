@@ -3,7 +3,6 @@ import { type DeviceService } from '$lib/server/devices/service';
 import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
-import { insertDeviceSchema } from '@smart-home-finder/common/types';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
 
@@ -68,7 +67,12 @@ export const endpoint_GET: EndpointHandler<{
 	});
 };
 
-export const postBodySchema = insertDeviceSchema;
+export const postBodySchema = z.object({
+	name: z.string().min(1),
+	protocol: z.enum(protocolEnum.enumValues),
+	deviceType: z.enum(deviceTypeEnum.enumValues),
+	images: z.array(z.string()).optional()
+});
 
 export const endpoint_POST: EndpointHandler<{
 	authProvider: IAuthProvider;
@@ -79,7 +83,17 @@ export const endpoint_POST: EndpointHandler<{
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const deviceId = await deviceRepository.insertDevice(body);
+	const deviceId = await deviceRepository.insertDevice({
+		name: body.name,
+		protocol: body.protocol,
+		deviceType: body.deviceType,
+		images: body.images ?? [],
+
+		// ignored
+		id: 0,
+		createdAt: new Date(),
+		updatedAt: new Date()
+	});
 
 	return json({ success: true, id: deviceId }, { status: 201 });
 };

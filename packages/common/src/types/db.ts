@@ -78,7 +78,6 @@ export const insertPriceHistorySchema = createInsertSchema(priceHistoryTable, {
 export type DeviceType = (typeof deviceTypeEnum.enumValues)[number];
 export type DeviceProtocol = (typeof protocolEnum.enumValues)[number];
 
-export type InsertDevice = z.infer<typeof insertDeviceSchema>;
 export type UpdateDevice = z.infer<typeof updateDeviceSchema>;
 export type Property = z.infer<typeof selectPropertySchema>;
 export type InsertProperty = z.infer<typeof insertPropertySchema>;

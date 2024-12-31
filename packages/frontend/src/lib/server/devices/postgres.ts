@@ -5,7 +5,6 @@ import {
 	type BaseDevice,
 	type DeviceProtocol,
 	type DeviceType,
-	type InsertDevice,
 	type Paginated,
 	type UpdateDevice,
 	type Variant,
@@ -73,10 +72,15 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		return selectDeviceSchema.nullable().parse(device);
 	}
 
-	async insertDevice(device: InsertDevice): Promise<number> {
+	async insertDevice(device: BaseDevice): Promise<number> {
 		const result = await db
 			.insert(devicesTable)
-			.values(device)
+			.values({
+				name: device.name,
+				deviceType: device.deviceType,
+				protocol: device.protocol,
+				images: device.images
+			})
 			.returning({ insertedId: devicesTable.id });
 
 		if (result.length === 0) {

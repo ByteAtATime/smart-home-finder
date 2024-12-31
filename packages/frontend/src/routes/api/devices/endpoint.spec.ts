@@ -91,7 +91,15 @@ describe('devices', () => {
 
 			const endpoint = await endpoint_POST({ authProvider, deviceRepository, body });
 
-			expect(deviceRepository.insertDevice).toHaveBeenCalledWith(body);
+			expect(deviceRepository.insertDevice).toHaveBeenCalledWith({
+				name: body.name,
+				protocol: body.protocol,
+				deviceType: body.deviceType,
+				images: body.images,
+				id: 0,
+				createdAt: expect.any(Date),
+				updatedAt: expect.any(Date)
+			});
 			expect(endpoint.status).toBe(201);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 			expect(await endpoint.json()).toEqual({ success: true, id: 1 });
