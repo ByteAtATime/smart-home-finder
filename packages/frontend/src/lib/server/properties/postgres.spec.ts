@@ -142,7 +142,8 @@ describe('PostgresPropertyRepository', () => {
 		expect(mockDb.set).toHaveBeenCalled();
 		expect(mockDb.where).toHaveBeenCalled();
 		expect(mockDb.returning).toHaveBeenCalled();
-		expect(result).toEqual(new Property(updatedProperty as any, repository)); // Cast to any for simplicity
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		expect(result).toEqual(new Property(updatedProperty as any, repository));
 	});
 
 	it('should return null if property to update is not found', async () => {

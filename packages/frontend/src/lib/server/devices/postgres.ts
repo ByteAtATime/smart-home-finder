@@ -7,7 +7,6 @@ import {
 	type DeviceType,
 	type InsertDevice,
 	type Paginated,
-	type PaginatedDevices,
 	type UpdateDevice,
 	type Variant,
 	type VariantWithOptions

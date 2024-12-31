@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresListingRepository } from './postgres';
-import { db } from '$lib/server/db';
 import { deviceListingsTable } from '@smart-home-finder/common/schema';
 import { SQL } from 'drizzle-orm';
 

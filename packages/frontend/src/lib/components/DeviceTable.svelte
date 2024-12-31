@@ -14,7 +14,6 @@
 	import { createRawSnippet } from 'svelte';
 	import Badge from './ui/badge/badge.svelte';
 	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
-	import Button from './ui/button/button.svelte';
 	import { Checkbox } from './ui/checkbox';
 	import { Label } from './ui/label';
 	import { navigating } from '$app/state';
@@ -27,7 +26,7 @@
 		properties: string[];
 	};
 
-	let { devices, total, page, pageSize, properties }: DeviceTableProps = $props();
+	let { devices, total, page, pageSize, properties: _ }: DeviceTableProps = $props();
 
 	let isLoading = $state(false);
 	let spinnerPromise: Promise<unknown> | null = $state(null);
@@ -124,7 +123,7 @@
 					checked={Object.values(protocolFilter).every((value) => !value)}
 					onCheckedChange={() => {
 						protocolFilter = Object.fromEntries(
-							Object.entries(protocolFilter).map(([protocol, value]) => [protocol, false])
+							Object.entries(protocolFilter).map(([protocol]) => [protocol, false])
 						);
 					}}
 					aria-labelledby="all"

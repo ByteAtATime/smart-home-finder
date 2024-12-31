@@ -20,7 +20,8 @@ export default ts.config(
 				'error',
 				{
 					argsIgnorePattern: '^_',
-					destructuredArrayIgnorePattern: '^_'
+					destructuredArrayIgnorePattern: '^_',
+					varsIgnorePattern: '^_'
 				}
 			]
 		},
