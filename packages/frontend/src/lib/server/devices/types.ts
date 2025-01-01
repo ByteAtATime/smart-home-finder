@@ -1,9 +1,4 @@
-import type {
-	DeviceData,
-	Paginated,
-	UpdateDevice,
-	VariantWithOptions
-} from '@smart-home-finder/common/types';
+import type { DeviceData, Paginated, UpdateDevice } from '@smart-home-finder/common/types';
 
 export interface IDeviceRepository {
 	getAllDevices(): Promise<DeviceData[]>;
@@ -22,5 +17,4 @@ export interface IDeviceRepository {
 		pageSize: number,
 		filters: { deviceType?: string[]; protocol?: string[] }
 	): Promise<Paginated<DeviceData>>;
-	getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]>;
 }

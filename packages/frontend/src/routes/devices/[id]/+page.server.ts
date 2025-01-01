@@ -1,15 +1,10 @@
-import { deviceSchema, currentPriceSchema } from '@smart-home-finder/common/types';
 import type { PageServerLoad } from './$types';
-import { z } from 'zod';
+import { deviceSchema } from '$lib/server/devices/device';
 
 export const load: PageServerLoad = async ({ params, fetch }) => {
 	const { device } = await fetch(`/api/devices/${params.id}`).then((res) => res.json());
 
 	return {
-		device: deviceSchema
-			.extend({
-				listings: z.array(currentPriceSchema)
-			})
-			.parse(device)
+		device: deviceSchema.parse(device)
 	};
 };

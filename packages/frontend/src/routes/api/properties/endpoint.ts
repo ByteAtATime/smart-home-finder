@@ -3,7 +3,12 @@ import type { IPropertyRepository } from '$lib/server/properties/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
-import { insertPropertySchema, updatePropertySchema } from '@smart-home-finder/common/types';
+import {
+	insertPropertySchema,
+	updatePropertySchema,
+	type PropertyData
+} from '@smart-home-finder/common/types';
+import { Property } from '$lib/server/properties/property';
 
 export const postBodySchema = insertPropertySchema;
 
@@ -16,8 +21,20 @@ export const endpoint_POST: EndpointHandler<{
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}
 
+	const propertyData = {
+		id: body.id,
+		name: body.name,
+		type: body.type,
+		unit: body.unit ?? null,
+		description: body.description ?? null,
+		createdAt: new Date(),
+		updatedAt: new Date()
+	} satisfies PropertyData;
+
 	try {
-		const newPropertyId = await propertyRepository.insertProperty(body);
+		const newPropertyId = await propertyRepository.insertProperty(
+			new Property(propertyData, propertyRepository)
+		);
 		return json({ success: true, id: newPropertyId }, { status: 201 });
 	} catch (error) {
 		console.error('Failed to create property:', error);

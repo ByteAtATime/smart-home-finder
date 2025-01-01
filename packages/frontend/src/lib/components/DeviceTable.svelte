@@ -10,16 +10,16 @@
 	import * as Pagination from '$lib/components/ui/pagination';
 	import { goto } from '$app/navigation';
 	import Spinner from './Spinner.svelte';
-	import type { DeviceWithDetails } from '@smart-home-finder/common/types';
 	import { createRawSnippet } from 'svelte';
 	import Badge from './ui/badge/badge.svelte';
 	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
 	import { Checkbox } from './ui/checkbox';
 	import { Label } from './ui/label';
 	import { navigating } from '$app/state';
+	import type { DeviceJson } from '$lib/server/devices/device';
 
 	type DeviceTableProps = {
-		devices: DeviceWithDetails[];
+		devices: DeviceJson[];
 		total: number;
 		page: number;
 		pageSize: number;
@@ -63,7 +63,7 @@
 		spinnerPromise = null;
 	});
 
-	const columns: ColumnDef<DeviceWithDetails>[] = [
+	const columns: ColumnDef<DeviceJson>[] = [
 		{
 			header: 'Name',
 			accessorKey: 'name',

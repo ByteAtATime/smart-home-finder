@@ -1,19 +1,23 @@
-import type {
-	DeviceData,
-	ListingWithPrice,
-	Variant,
-	PropertyData,
-	DeviceProtocol,
-	DeviceType
+import {
+	type DeviceData,
+	type ListingWithPrice,
+	type DeviceProtocol,
+	type DeviceType,
+	selectDeviceSchema,
+	currentPriceSchema
 } from '@smart-home-finder/common/types';
 import type { DeviceService } from './service';
-import type { Property } from '../properties/property';
+import { propertyJsonSchema, type Property, type PropertyJson } from '../properties/property';
+import { variantJsonSchema, type Variant } from '../variant/variant';
+import { z } from 'zod';
 
-export type DeviceJson = DeviceData & {
-	variants: Variant[];
-	properties: Record<string, PropertyData>;
-	listings: ListingWithPrice[];
-};
+export const deviceSchema = selectDeviceSchema.extend({
+	properties: z.record(z.string(), propertyJsonSchema),
+	variants: z.array(variantJsonSchema),
+	listings: z.array(currentPriceSchema)
+});
+
+export type DeviceJson = z.infer<typeof deviceSchema>;
 
 export class Device {
 	public constructor(
@@ -95,12 +99,16 @@ export class Device {
 				acc[property.id] = property;
 				return acc;
 			},
-			{} as Record<string, PropertyData>
+			{} as Record<string, PropertyJson>
 		);
+
+		const variants = await this.getVariants();
+
+		const variantsJson = await Promise.all(variants.map((variant) => variant.toJson(this.id)));
 
 		return {
 			...this.data,
-			variants: await this.getVariants(),
+			variants: variantsJson,
 			properties: propertiesById,
 			listings: await this.getListings()
 		};

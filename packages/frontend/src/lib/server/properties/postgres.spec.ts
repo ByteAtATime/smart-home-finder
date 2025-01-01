@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresPropertyRepository } from './postgres';
-import type { InsertProperty } from '@smart-home-finder/common/types';
 import { Property } from './property';
+import type { PropertyData } from '@smart-home-finder/common/types';
 
 const mockDb = vi.hoisted(() => ({
 	query: {
@@ -35,20 +35,28 @@ describe('PostgresPropertyRepository', () => {
 	});
 
 	it('should insert a new property', async () => {
-		const newProperty: InsertProperty = {
+		const newProperty = {
 			id: 'new-property',
 			name: 'New Property',
 			type: 'string',
 			unit: null,
-			description: null
-		};
+			description: null,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		} satisfies PropertyData;
 		const returnedProperty = { id: 'new-property' }; // Simplified for mocking
 		mockDb.insert().values().returning.mockResolvedValue([returnedProperty]);
 
-		const result = await repository.insertProperty(newProperty);
+		const result = await repository.insertProperty(new Property(newProperty, repository));
 
 		expect(mockDb.insert).toHaveBeenCalled();
-		expect(mockDb.values).toHaveBeenCalledWith(newProperty);
+		expect(mockDb.values).toHaveBeenCalledWith({
+			id: newProperty.id,
+			name: newProperty.name,
+			type: newProperty.type,
+			unit: newProperty.unit,
+			description: newProperty.description
+		});
 		expect(mockDb.returning).toHaveBeenCalled();
 		expect(result).toBe(returnedProperty.id);
 	});

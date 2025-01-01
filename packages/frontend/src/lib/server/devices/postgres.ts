@@ -1,21 +1,13 @@
 import { count, eq, and, sql, inArray } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
-	variantWithOptionsSchema,
 	type DeviceData,
 	type DeviceProtocol,
 	type DeviceType,
 	type Paginated,
-	type UpdateDevice,
-	type Variant,
-	type VariantWithOptions
+	type UpdateDevice
 } from '@smart-home-finder/common/types';
-import {
-	devicesTable,
-	deviceVariantsTable,
-	variantOptionsTable,
-	variantsTable
-} from '@smart-home-finder/common/schema';
+import { devicesTable } from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
@@ -102,79 +94,5 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		}
 
 		return selectDeviceSchema.parse(result[0]);
-	}
-
-	async getVariantsForDevice(deviceId: number): Promise<VariantWithOptions[]> {
-		const options = await db
-			.select({
-				variantId: variantsTable.id,
-				variantName: variantsTable.name,
-				variantCreatedAt: variantsTable.createdAt,
-				variantUpdatedAt: variantsTable.updatedAt,
-				optionId: variantOptionsTable.id,
-				optionValue: variantOptionsTable.value,
-				optionDeviceId: sql<number>`
-      COALESCE(
-        MIN(CASE 
-          WHEN ${deviceVariantsTable.deviceId} = ${deviceId} THEN ${deviceVariantsTable.deviceId}
-          ELSE NULL 
-        END),
-        MIN(${deviceVariantsTable.deviceId})
-      )
-			  `, // TODO: what's the best way to handle multiple devices with the same variant option?
-				optionCreatedAt: variantOptionsTable.createdAt,
-				optionUpdatedAt: variantOptionsTable.updatedAt
-			})
-			.from(variantOptionsTable)
-			.innerJoin(variantsTable, eq(variantOptionsTable.variantId, variantsTable.id))
-			.innerJoin(
-				deviceVariantsTable,
-				eq(variantOptionsTable.id, deviceVariantsTable.variantOptionId)
-			)
-			.where(
-				inArray(
-					variantsTable.id,
-					db
-						.select({ id: deviceVariantsTable.variantId })
-						.from(deviceVariantsTable)
-						.where(eq(deviceVariantsTable.deviceId, deviceId))
-				)
-			)
-			.groupBy(
-				variantsTable.id,
-				variantsTable.name,
-				variantsTable.createdAt,
-				variantsTable.updatedAt,
-				variantOptionsTable.id,
-				variantOptionsTable.value,
-				variantOptionsTable.createdAt,
-				variantOptionsTable.updatedAt
-			);
-
-		const aggregatedVariants = options.reduce(
-			(acc, option) => {
-				const variant = {
-					id: option.variantId,
-					name: option.variantName,
-					createdAt: option.variantCreatedAt,
-					updatedAt: option.variantUpdatedAt
-				} satisfies Variant;
-
-				acc[option.variantId] = acc[option.variantId] ?? { ...variant, options: [] };
-
-				acc[option.variantId].options?.push({
-					id: option.optionId!,
-					value: option.optionValue!,
-					deviceId: option.optionDeviceId,
-					createdAt: option.optionCreatedAt!,
-					updatedAt: option.optionUpdatedAt!,
-					variantId: option.variantId!
-				});
-				return acc;
-			},
-			{} as Record<number, VariantWithOptions>
-		);
-
-		return variantWithOptionsSchema.array().parse(Object.values(aggregatedVariants));
 	}
 }

@@ -81,7 +81,6 @@ export type DeviceProtocol = (typeof protocolEnum.enumValues)[number];
 export type UpdateDevice = z.infer<typeof updateDeviceSchema>;
 export type PropertyData = z.infer<typeof selectPropertySchema>;
 export type UpdateProperty = z.infer<typeof updatePropertySchema>;
-export type SelectDeviceProperty = z.infer<typeof selectDevicePropertySchema>;
 export type Seller = z.infer<typeof selectSellerSchema>;
 export type InsertSeller = z.infer<typeof insertSellerSchema>;
 export type DeviceListing = z.infer<typeof selectDeviceListingSchema>;
@@ -90,7 +89,6 @@ export type PriceHistory = z.infer<typeof selectPriceHistorySchema>;
 export type InsertPriceHistory = z.infer<typeof insertPriceHistorySchema>;
 export type Variant = z.infer<typeof selectVariantSchema>;
 export type InsertVariant = z.infer<typeof insertVariantSchema>;
-export type VariantOption = z.infer<typeof selectVariantOptionSchema>;
 export type InsertVariantOption = z.infer<typeof insertVariantOptionSchema>;
 
 export const variantWithOptionsSchema = selectVariantSchema.extend({
@@ -103,7 +101,7 @@ export const variantWithOptionsSchema = selectVariantSchema.extend({
 
 export type VariantWithOptions = z.infer<typeof variantWithOptionsSchema>;
 
-const devicePropertyValueSchema = selectPropertySchema.extend({
+export const devicePropertyValueSchema = selectPropertySchema.extend({
 	value: z.union([z.number(), z.number(), z.string(), z.boolean()])
 });
 
@@ -128,12 +126,6 @@ export const currentPriceSchema = z.object({
 	priceUpdatedAt: z.coerce.date()
 });
 
-export const deviceSchema = selectDeviceSchema.extend({
-	properties: z.record(z.string(), devicePropertyValueSchema),
-	variants: z.array(variantWithOptionsSchema),
-	listings: z.array(currentPriceSchema)
-});
-
 export const deviceWithListingsSchema = selectDeviceSchema.extend({
 	listings: z.array(
 		selectDeviceListingSchema.extend({
@@ -145,7 +137,6 @@ export const deviceWithListingsSchema = selectDeviceSchema.extend({
 
 export type DeviceData = z.infer<typeof selectDeviceSchema>;
 
-export type DeviceWithDetails = z.infer<typeof deviceSchema>;
 export type ListingWithPrice = z.infer<typeof currentPriceSchema>;
 export type DeviceWithListings = z.infer<typeof deviceWithListingsSchema>;
 

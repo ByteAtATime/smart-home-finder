@@ -1,25 +1,19 @@
-import type {
-	ListingWithPrice,
-	Paginated,
-	Variant,
-	PropertyData
-} from '@smart-home-finder/common/types';
+import type { ListingWithPrice, Paginated } from '@smart-home-finder/common/types';
 import type { IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
 import { Device, type DeviceJson } from './device';
-import type { Property } from '../properties/property';
+import type { Property, PropertyJson } from '../properties/property';
+import type { IVariantRepository } from '../variant/types';
+import type { Variant } from '../variant/variant';
 
 export class DeviceService {
 	constructor(
 		private deviceRepository: IDeviceRepository,
 		private propertyRepository: IPropertyRepository,
-		private listingRepository: IListingRepository
+		private listingRepository: IListingRepository,
+		private variantRepository: IVariantRepository
 	) {}
-
-	async getDeviceVariants(id: number): Promise<Variant[]> {
-		return await this.deviceRepository.getVariantsForDevice(id);
-	}
 
 	async getAllProperties(): Promise<Property[]> {
 		return await this.propertyRepository.getAllProperties();
@@ -27,6 +21,10 @@ export class DeviceService {
 
 	async getDeviceListings(id: number): Promise<ListingWithPrice[]> {
 		return await this.listingRepository.getDevicePrices(id);
+	}
+
+	async getDeviceVariants(id: number): Promise<Variant[]> {
+		return await this.variantRepository.getVariantsForDevice(id);
 	}
 
 	async getDeviceById(id: number): Promise<Device | null> {
@@ -62,10 +60,15 @@ export class DeviceService {
 						acc[property.id] = property;
 						return acc;
 					},
-					{} as Record<string, PropertyData>
+					{} as Record<string, PropertyJson>
 				);
 
-				return { ...device, variants, properties: propertiesById, listings: listings };
+				return {
+					...device,
+					variants: await Promise.all(variants.map((variant) => variant.toJson())),
+					properties: propertiesById,
+					listings: listings
+				};
 			})
 		);
 

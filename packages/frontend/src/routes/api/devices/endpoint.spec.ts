@@ -7,6 +7,8 @@ import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
 import { MockListingRepository } from '$lib/server/listings/mock';
 import { Property } from '$lib/server/properties/property';
+import { MockVariantRepository } from '$lib/server/variant/mock';
+import { Variant } from '$lib/server/variant/variant';
 
 const mockDevice = {
 	id: 1,
@@ -41,13 +43,25 @@ describe('devices', () => {
 			const deviceRepository = new MockDeviceRepository();
 			const propertyRepository = new MockPropertyRepository();
 			const listingRepository = new MockListingRepository();
+			const variantRepository = new MockVariantRepository();
 			const deviceService = new DeviceService(
 				deviceRepository,
 				propertyRepository,
-				listingRepository
+				listingRepository,
+				variantRepository
 			);
 
 			const mockPropertyClass = new Property(mockDeviceProperties.voltage, propertyRepository);
+
+			const mockVariant = new Variant(
+				{
+					id: 1,
+					createdAt: new Date(),
+					updatedAt: new Date(),
+					name: 'Test Variant'
+				},
+				variantRepository
+			);
 
 			const query = { page: 1, pageSize: 10 };
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
@@ -58,6 +72,7 @@ describe('devices', () => {
 			} satisfies Paginated<DeviceData>);
 
 			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
+			variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
 
 			const endpoint = await endpoint_GET({ deviceService, query });
@@ -75,7 +90,9 @@ describe('devices', () => {
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 			expect(await endpoint.json()).toEqual({
 				success: true,
-				devices: [resultDevice],
+				devices: [
+					{ ...resultDevice, variants: [JSON.parse(JSON.stringify(await mockVariant.toJson()))] }
+				],
 				page: query.page,
 				pageSize: query.pageSize,
 				total: 1

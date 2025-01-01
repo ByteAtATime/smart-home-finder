@@ -10,21 +10,24 @@ import type {
 	VariantWithOptions
 } from '@smart-home-finder/common/types';
 import { Property } from '../properties/property';
+import { MockVariantRepository } from '../variant/mock';
 
 describe('DeviceService', () => {
 	let deviceService: DeviceService;
 	let mockDeviceRepository: MockDeviceRepository;
 	let mockPropertyRepository: MockPropertyRepository;
 	let mockListingRepository: MockListingRepository;
-
+	let mockVariantRepository: MockVariantRepository;
 	beforeEach(() => {
 		mockDeviceRepository = new MockDeviceRepository();
 		mockPropertyRepository = new MockPropertyRepository();
 		mockListingRepository = new MockListingRepository();
+		mockVariantRepository = new MockVariantRepository();
 		deviceService = new DeviceService(
 			mockDeviceRepository,
 			mockPropertyRepository,
-			mockListingRepository
+			mockListingRepository,
+			mockVariantRepository
 		);
 	});
 
@@ -66,9 +69,9 @@ describe('DeviceService', () => {
 		const mockPrices: ListingWithPrice[] = [];
 
 		mockDeviceRepository.getBaseDeviceById.mockResolvedValue(mockDevice);
-		mockDeviceRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
 		mockPropertyRepository.getAllProperties.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
+		mockVariantRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
 
 		const result = await deviceService.getDeviceById(deviceId);
 
@@ -121,16 +124,13 @@ describe('DeviceService', () => {
 		const mockPrices: ListingWithPrice[] = [];
 
 		mockDeviceRepository.getAllDevicesPaginated.mockResolvedValue(mockPaginatedDevices);
-		mockDeviceRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
 		mockPropertyRepository.getAllProperties.mockResolvedValue(mockProperties);
 		mockListingRepository.getDevicePrices.mockResolvedValue(mockPrices);
+		mockVariantRepository.getVariantsForDevice.mockResolvedValue(mockVariants);
 
 		const result = await deviceService.getAllDevicesWithVariantsAndProperties(page, pageSize);
 
 		expect(mockDeviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(page, pageSize, {});
-		expect(mockDeviceRepository.getVariantsForDevice).toHaveBeenCalledTimes(
-			mockPaginatedDevices.items.length
-		);
 		expect(mockPropertyRepository.getAllProperties).toHaveBeenCalledTimes(
 			mockPaginatedDevices.items.length
 		);

@@ -1,14 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Device } from './device';
 import type { DeviceService } from './service';
-import type { DeviceData, ListingWithPrice, Variant } from '@smart-home-finder/common/types';
+import type { DeviceData, ListingWithPrice } from '@smart-home-finder/common/types';
 import type { Property } from '../properties/property';
+import { Variant, type VariantJson } from '../variant/variant';
+import { MockVariantRepository } from '../variant/mock';
 
 const mockDeviceService = {
 	getDeviceVariants: vi.fn(),
 	getAllProperties: vi.fn(),
 	getDeviceListings: vi.fn()
 } as unknown as DeviceService;
+const mockVariantRepository = new MockVariantRepository();
 
 const mockDeviceData: DeviceData = {
 	id: 1,
@@ -20,14 +23,16 @@ const mockDeviceData: DeviceData = {
 	updatedAt: new Date('2023-10-27T12:30:00Z')
 };
 
-const mockVariants: Variant[] = [
+const mockVariants: VariantJson[] = [
 	{
 		id: 1,
 		name: 'Color',
 		createdAt: new Date('2023-10-26T10:00:00Z'),
-		updatedAt: new Date('2023-10-26T11:00:00Z')
+		updatedAt: new Date('2023-10-26T11:00:00Z'),
+		options: []
 	}
 ];
+const mockVariant = new Variant(mockVariants[0], mockVariantRepository);
 
 const mockProperties: Property[] = [
 	{
@@ -91,12 +96,12 @@ describe('Device', () => {
 	});
 
 	it('getVariants should fetch and return variants', async () => {
-		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue(mockVariants);
+		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue([mockVariant]);
 
 		const variants = await device.getVariants();
 
 		expect(mockDeviceService.getDeviceVariants).toHaveBeenCalledWith(mockDeviceData.id);
-		expect(variants).toEqual(mockVariants);
+		expect(variants).toEqual([mockVariant]);
 	});
 
 	it('getProperties should fetch and return properties', async () => {
@@ -118,13 +123,13 @@ describe('Device', () => {
 	});
 
 	it('toJson should return correct DeviceJson', async () => {
-		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue(mockVariants);
+		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue([mockVariant]);
 		vi.mocked(mockDeviceService.getAllProperties).mockResolvedValue(mockProperties);
 		vi.mocked(mockDeviceService.getDeviceListings).mockResolvedValue(mockListings);
 
 		const expectedJson = {
 			...mockDeviceData,
-			variants: mockVariants,
+			variants: [await mockVariant.toJson()],
 			properties: {
 				prop1: {
 					id: 'prop1',
@@ -144,7 +149,9 @@ describe('Device', () => {
 		expect(json).toEqual(expectedJson);
 	});
 	it('should only fetch variants once', async () => {
-		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue(mockVariants);
+		vi.mocked(mockDeviceService.getDeviceVariants).mockResolvedValue([
+			new Variant(mockVariants[0], mockVariantRepository)
+		]);
 
 		await device.getVariants();
 		await device.getVariants();

@@ -1,5 +1,19 @@
+import { z } from 'zod';
 import type { IPropertyRepository } from './types';
 import type { PropertyData } from '@smart-home-finder/common/types';
+
+export const propertyJsonSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	type: z.enum(['string', 'int', 'float', 'boolean']),
+	unit: z.string().nullable(),
+	description: z.string().nullable(),
+	createdAt: z.coerce.date(),
+	updatedAt: z.coerce.date(),
+	value: z.union([z.string(), z.number(), z.boolean(), z.null()])
+});
+
+export type PropertyJson = z.infer<typeof propertyJsonSchema>;
 
 export class Property {
 	private _value: string | number | boolean | null = null;
@@ -45,7 +59,7 @@ export class Property {
 		return this.data.updatedAt;
 	}
 
-	public async toJson(deviceId?: number) {
+	public async toJson(deviceId?: number): Promise<PropertyJson> {
 		return {
 			id: this.id,
 			name: this.name,

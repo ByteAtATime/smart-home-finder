@@ -8,6 +8,8 @@ import { MockListingRepository } from '$lib/server/listings/mock';
 import { MockAuthProvider } from '$lib/server/auth/mock';
 import { Property } from '$lib/server/properties/property';
 import type { PropertyData } from '@smart-home-finder/common/types';
+import { MockVariantRepository } from '$lib/server/variant/mock';
+import { Variant } from '$lib/server/variant/variant';
 const mockDevice = {
 	id: 1,
 	images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
@@ -40,19 +42,31 @@ describe('GET /api/devices/:id', () => {
 		const deviceRepository = new MockDeviceRepository();
 		const propertyRepository = new MockPropertyRepository();
 		const listingRepository = new MockListingRepository();
+		const variantRepository = new MockVariantRepository();
 		const deviceService = new DeviceService(
 			deviceRepository,
 			propertyRepository,
-			listingRepository
+			listingRepository,
+			variantRepository
 		);
 
 		const params = { id: '1' };
 
+		const mockVariant = new Variant(
+			{
+				id: 1,
+				createdAt: new Date(),
+				updatedAt: new Date(),
+				name: 'Test Variant'
+			},
+			variantRepository
+		);
 		const mockPropertyClass = new Property(mockDeviceProperties.voltage, propertyRepository);
 
 		deviceRepository.getBaseDeviceById = vi.fn().mockResolvedValue(mockDevice);
 		propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
 		propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
+		variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 		listingRepository.getDevicePrices = vi.fn().mockResolvedValue([]);
 
 		const endpoint = await endpoint_GET({ deviceService, params });
@@ -65,7 +79,11 @@ describe('GET /api/devices/:id', () => {
 		expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 		expect(await endpoint.json()).toEqual({
 			success: true,
-			device: { ...resultDevice, listings: [] }
+			device: {
+				...resultDevice,
+				variants: [JSON.parse(JSON.stringify(await mockVariant.toJson()))],
+				listings: []
+			}
 		});
 	});
 });

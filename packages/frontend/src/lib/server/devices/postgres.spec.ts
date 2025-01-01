@@ -12,18 +12,6 @@ const createMockDevice = (id: number) => ({
 	updatedAt: new Date()
 });
 
-const createMockVariant = (variantId: number, optionId: number, deviceId: number) => ({
-	variantId,
-	variantName: `Variant ${variantId}`,
-	variantCreatedAt: new Date(),
-	variantUpdatedAt: new Date(),
-	optionId,
-	optionDeviceId: deviceId,
-	optionValue: `Option ${optionId}`,
-	optionCreatedAt: new Date(),
-	optionUpdatedAt: new Date()
-});
-
 const mockDb = vi.hoisted(() => ({
 	query: {
 		devicesTable: {
@@ -140,52 +128,6 @@ describe('PostgresDeviceRepository', () => {
 			mockDb.insert().values().returning.mockResolvedValue([]);
 
 			await expect(repository.insertDevice(newDevice)).rejects.toThrow('Failed to insert device');
-		});
-	});
-
-	describe('getVariantsForDevice', () => {
-		it('should return variants with options', async () => {
-			const mockVariants = [
-				createMockVariant(1, 1, 1),
-				createMockVariant(1, 2, 2),
-				createMockVariant(2, 3, 1)
-			];
-
-			mockDb.select.mockReturnThis();
-			mockDb.from.mockReturnThis();
-			mockDb.innerJoin.mockReturnThis();
-			mockDb.where.mockReturnThis();
-			mockDb.groupBy.mockResolvedValue(mockVariants);
-
-			const result = await repository.getVariantsForDevice(1);
-
-			expect(result).toMatchObject([
-				{
-					id: 1,
-					name: 'Variant 1',
-					options: [
-						{ id: 1, value: 'Option 1', deviceId: 1 },
-						{ id: 2, value: 'Option 2', deviceId: 2 }
-					]
-				},
-				{
-					id: 2,
-					name: 'Variant 2',
-					options: [{ id: 3, value: 'Option 3', deviceId: 1 }]
-				}
-			]);
-		});
-
-		it('should return empty array when no variants found', async () => {
-			mockDb.select.mockReturnThis();
-			mockDb.from.mockReturnThis();
-			mockDb.innerJoin.mockReturnThis();
-			mockDb.where.mockReturnThis();
-			mockDb.groupBy.mockResolvedValue([]);
-
-			const result = await repository.getVariantsForDevice(1);
-
-			expect(result).toEqual([]);
 		});
 	});
 });

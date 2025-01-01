@@ -8,6 +8,7 @@ import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
 import type { MiddlewareHandler } from './types';
 import { DeviceService } from '../devices/service';
+import { PostgresVariantRepository } from '../variant/postgres';
 
 export const withAuthProvider = <TDeps extends { auth: IAuthProvider }>(): MiddlewareHandler<
 	Omit<TDeps, 'auth'>
@@ -52,10 +53,13 @@ export const withDeviceService = <
 		const deviceRepository = new PostgresDeviceRepository();
 		const propertyRepository = new PostgresPropertyRepository();
 		const listingRepository = new PostgresListingRepository();
+		const variantRepository = new PostgresVariantRepository();
+
 		const deviceService = new DeviceService(
 			deviceRepository,
 			propertyRepository,
-			listingRepository
+			listingRepository,
+			variantRepository
 		);
 
 		return next({ ...deps, deviceService } as unknown as TDeps);

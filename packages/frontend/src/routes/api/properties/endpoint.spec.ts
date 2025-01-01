@@ -23,7 +23,16 @@ describe('POST /api/properties', () => {
 
 		const endpoint = await endpoint_POST({ authProvider, propertyRepository, body });
 
-		expect(propertyRepository.insertProperty).toHaveBeenCalledWith(body);
+		expect(propertyRepository.insertProperty).toHaveBeenCalledWith(
+			new Property(
+				{
+					...body,
+					createdAt: expect.any(Date),
+					updatedAt: expect.any(Date)
+				},
+				propertyRepository
+			)
+		);
 		expect(endpoint.status).toBe(201);
 		expect(await endpoint.json()).toEqual({ success: true, id: 'new-property' });
 	});
