@@ -17,19 +17,41 @@
 	import { Label } from './ui/label';
 	import { navigating } from '$app/state';
 	import type { DeviceJson } from '$lib/server/devices/device';
+	import { Slider } from './ui/slider';
 
 	type DeviceTableProps = {
 		devices: DeviceJson[];
 		total: number;
 		page: number;
 		pageSize: number;
+		priceBounds: [number, number];
 		properties: string[];
 	};
 
-	let { devices, total, page, pageSize, properties: _ }: DeviceTableProps = $props();
+	let {
+		devices,
+		total,
+		page,
+		pageSize,
+		priceBounds: initialPriceBounds
+	}: DeviceTableProps = $props();
 
 	let isLoading = $state(false);
 	let spinnerPromise: Promise<unknown> | null = $state(null);
+
+	let priceBounds = $state([0, initialPriceBounds[1]]);
+	let debouncedPriceBounds = $state(initialPriceBounds);
+	let priceDebounceTimeout: ReturnType<typeof setTimeout>;
+
+	$effect(() => {
+		clearTimeout(priceDebounceTimeout);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		priceBounds;
+		priceDebounceTimeout = setTimeout(() => {
+			debouncedPriceBounds[0] = priceBounds[0];
+			debouncedPriceBounds[1] = priceBounds[1];
+		}, 500);
+	});
 
 	let protocolFilter = $state(
 		Object.fromEntries(
@@ -44,15 +66,32 @@
 		isLoading = true;
 		spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125));
 
-		goto(
-			`?page=${page}&pageSize=${pageSize}&protocol=${Object.entries(protocolFilter)
-				.filter(([_, value]) => value)
-				.map(([protocol]) => protocol)
-				.join(',')}&deviceType=${Object.entries(deviceTypeFilter)
-				.filter(([_, value]) => value)
-				.map(([deviceType]) => deviceType)
-				.join(',')}`
-		);
+		const searchParams = new URLSearchParams();
+		searchParams.set('page', page.toString());
+		searchParams.set('pageSize', pageSize.toString());
+		if (Object.values(protocolFilter).some((value) => value)) {
+			searchParams.set(
+				'protocol',
+				Object.entries(protocolFilter)
+					.filter(([_, value]) => value)
+					.map(([protocol]) => protocol)
+					.join(',')
+			);
+		}
+		if (Object.values(deviceTypeFilter).some((value) => value)) {
+			searchParams.set(
+				'deviceType',
+				Object.entries(deviceTypeFilter)
+					.filter(([_, value]) => value)
+					.map(([deviceType]) => deviceType)
+					.join(',')
+			);
+		}
+		if (debouncedPriceBounds[0] !== 0 || debouncedPriceBounds[1] !== initialPriceBounds[1]) {
+			searchParams.set('priceBounds', debouncedPriceBounds.join(','));
+		}
+
+		goto(`?${searchParams.toString()}`);
 	});
 
 	$effect(() => {
@@ -98,6 +137,18 @@
 						render: () => PROTOCOL_DISPLAY_NAMES[row.original.protocol] ?? row.original.protocol
 					}))
 				});
+			}
+		},
+		{
+			header: 'Price',
+			accessorKey: 'price',
+			cell: ({ row }) => {
+				const lowestPrice = Math.min(...row.original.listings.map((listing) => listing.price));
+				if (lowestPrice === Infinity) {
+					return '-';
+				}
+
+				return `$${lowestPrice}`;
 			}
 		}
 	];
@@ -192,6 +243,29 @@
 					</Label>
 				</div>
 			{/each}
+
+			<h2 class="mt-4 text-lg font-bold">Price</h2>
+
+			<div class="relative pt-4">
+				{#each priceBounds as value}
+					<span
+						class="absolute bottom-3 -translate-x-1/2"
+						style="left: {(value / initialPriceBounds[1]) * 100}%"
+					>
+						{value}
+					</span>
+				{/each}
+
+				<Slider
+					bind:value={priceBounds}
+					min={0}
+					max={initialPriceBounds[1]}
+					step={1}
+					class="w-full"
+					aria-label="Price"
+					type="multiple"
+				/>
+			</div>
 		</div>
 
 		<div class="w-full rounded-md border">
@@ -233,7 +307,7 @@
 						</Table.Row>
 					{:else}
 						<Table.Row>
-							<Table.Cell colspan={columns.length + 1} class="h-24 text-center">
+							<Table.Cell colspan={columns.length + 2} class="h-24 text-center">
 								No devices found.
 							</Table.Cell>
 						</Table.Row>

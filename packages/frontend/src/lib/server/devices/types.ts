@@ -15,6 +15,6 @@ export interface IDeviceRepository {
 	getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string[]; protocol?: string[] }
+		filters: { deviceType?: string[]; protocol?: string[]; priceBounds?: [number, number] }
 	): Promise<Paginated<DeviceData>>;
 }

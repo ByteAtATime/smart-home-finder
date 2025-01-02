@@ -3,11 +3,11 @@
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 
 	let { data } = $props();
-	const { devices, total, pageSize, page } = $derived(data);
+	const { devices, total, pageSize, page, priceBounds } = $derived(data);
 </script>
 
 <ThemeToggle />
 
 <main class="mx-auto max-w-screen-lg p-4">
-	<DeviceTable {devices} {total} {pageSize} {page} properties={[]} />
+	<DeviceTable {devices} {total} {pageSize} {page} {priceBounds} properties={[]} />
 </main>

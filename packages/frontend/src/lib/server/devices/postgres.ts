@@ -1,4 +1,4 @@
-import { count, eq, and, sql, inArray } from 'drizzle-orm';
+import { count, eq, and, sql, inArray, between, isNull } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	type DeviceData,
@@ -7,7 +7,11 @@ import {
 	type Paginated,
 	type UpdateDevice
 } from '@smart-home-finder/common/types';
-import { devicesTable } from '@smart-home-finder/common/schema';
+import {
+	deviceListingsTable,
+	devicesTable,
+	priceHistoryTable
+} from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
 import type { IDeviceRepository } from './types';
 
@@ -19,11 +23,28 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string[]; protocol?: string[] } = {}
+		filters: { deviceType?: string[]; protocol?: string[]; priceBounds?: [number, number] } = {}
 	): Promise<Paginated<DeviceData>> {
 		const offset = (page - 1) * pageSize;
 
-		const query = db.select().from(devicesTable).offset(offset).limit(pageSize);
+		const query = db
+			.select({
+				id: devicesTable.id,
+				name: devicesTable.name,
+				createdAt: devicesTable.createdAt,
+				updatedAt: devicesTable.updatedAt,
+				protocol: devicesTable.protocol,
+				images: devicesTable.images,
+				deviceType: devicesTable.deviceType,
+				price: priceHistoryTable.price,
+				priceHistory: priceHistoryTable.price,
+				total: count().append(sql`OVER()`)
+			})
+			.from(devicesTable)
+			.offset(offset)
+			.limit(pageSize)
+			.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
+			.leftJoin(priceHistoryTable, eq(deviceListingsTable.id, priceHistoryTable.listingId));
 
 		const whereConditions = [];
 		if (filters.deviceType) {
@@ -33,18 +54,22 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 			whereConditions.push(inArray(devicesTable.protocol, filters.protocol as DeviceProtocol[]));
 		}
 
+		if (filters.priceBounds) {
+			whereConditions.push(
+				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1]),
+				isNull(priceHistoryTable.validTo)
+			);
+		}
+
 		if (whereConditions.length > 0) {
 			query.where(and(...whereConditions));
 		}
 
 		const devices = await query;
 
-		const totalResult = await db.select({ value: count() }).from(devicesTable).execute();
-		const total = totalResult[0].value;
-
 		return {
 			items: devices,
-			total,
+			total: devices[0]?.total ?? 0,
 			page,
 			pageSize
 		};

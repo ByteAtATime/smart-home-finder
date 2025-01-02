@@ -75,7 +75,7 @@ describe('devices', () => {
 			variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
 
-			const endpoint = await endpoint_GET({ deviceService, query });
+			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
 
 			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
 				query.page,

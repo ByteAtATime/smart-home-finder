@@ -2,6 +2,7 @@ import type { IAuthProvider } from '$lib/server/auth/types';
 import { type DeviceService } from '$lib/server/devices/service';
 import type { IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
+import type { IListingRepository } from '$lib/server/listings/types';
 import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -40,30 +41,43 @@ export const querySchema = z.object({
 					(Object.values(protocolEnum.enumValues) as string[]).join(', ')
 			}
 		)
+		.optional(),
+	priceBounds: z
+		.string()
+		.regex(/^\d+,\d+$/)
 		.optional()
 });
 
 export const endpoint_GET: EndpointHandler<{
 	deviceService: DeviceService;
+	listingRepository: IListingRepository;
 	query: z.infer<typeof querySchema>;
-}> = async ({ deviceService, query }) => {
-	const { page, pageSize, deviceType, protocol } = query;
+}> = async ({ deviceService, listingRepository, query }) => {
+	const { page, pageSize, deviceType, protocol, priceBounds: priceBoundsFilter } = query;
+
+	const [minPrice, maxPrice] = priceBoundsFilter
+		? priceBoundsFilter.split(',').map(Number)
+		: [null, null];
 
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
 		pageSize,
 		{
 			deviceType: deviceType ? deviceType.split(',') : undefined,
-			protocol: protocol ? protocol.split(',') : undefined
+			protocol: protocol ? protocol.split(',') : undefined,
+			priceBounds: minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined
 		}
 	);
+
+	const priceBounds = await listingRepository.getPriceBounds();
 
 	return json({
 		success: true,
 		total: paginatedDevices.total,
 		pageSize,
 		page,
-		devices: paginatedDevices.items
+		devices: paginatedDevices.items,
+		priceBounds
 	});
 };
 

@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, max, min } from 'drizzle-orm';
 import type { ListingWithPrice, DeviceListing } from '@smart-home-finder/common/types';
 import {
 	deviceListingsTable,
@@ -49,5 +49,17 @@ export class PostgresListingRepository implements IListingRepository {
 			);
 
 		return result as ListingWithPrice[];
+	}
+
+	async getPriceBounds(): Promise<[number, number]> {
+		const result = await db
+			.select({
+				lowestPrice: min(priceHistoryTable.price),
+				highestPrice: max(priceHistoryTable.price)
+			})
+			.from(priceHistoryTable)
+			.where(isNull(priceHistoryTable.validTo));
+
+		return [result[0].lowestPrice ?? 0, result[0].highestPrice ?? 0];
 	}
 }
