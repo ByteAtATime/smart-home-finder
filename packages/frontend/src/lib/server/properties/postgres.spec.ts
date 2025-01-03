@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { PostgresPropertyRepository } from './postgres';
 import { Property } from './property';
 import type { PropertyData } from '@smart-home-finder/common/types';
+import { and, eq } from 'drizzle-orm';
+import { devicePropertiesTable } from '@smart-home-finder/common/schema';
 
 const mockDb = vi.hoisted(() => ({
 	query: {
@@ -16,6 +18,7 @@ const mockDb = vi.hoisted(() => ({
 	from: vi.fn().mockReturnThis(),
 	leftJoin: vi.fn().mockReturnThis(),
 	where: vi.fn().mockReturnThis(),
+	limit: vi.fn().mockReturnThis(),
 	update: vi.fn().mockReturnThis(),
 	set: vi.fn().mockReturnThis(),
 	delete: vi.fn().mockReturnThis(),
@@ -61,6 +64,23 @@ describe('PostgresPropertyRepository', () => {
 		expect(result).toBe(returnedProperty.id);
 	});
 
+	it('should handle database errors during insert', async () => {
+		const newProperty = {
+			id: 'new-property',
+			name: 'New Property',
+			type: 'string',
+			unit: null,
+			description: null,
+			createdAt: new Date(),
+			updatedAt: new Date()
+		} satisfies PropertyData;
+		mockDb.insert().values().returning.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.insertProperty(new Property(newProperty, repository))).rejects.toThrow(
+			'Database error'
+		);
+	});
+
 	it('should get all properties', async () => {
 		const mockProperties = [
 			{
@@ -91,6 +111,12 @@ describe('PostgresPropertyRepository', () => {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			mockProperties.map((p) => new Property(p as any, repository))
 		);
+	});
+
+	it('should handle database errors during get all properties', async () => {
+		mockDb.query.propertiesTable.findMany.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getAllProperties()).rejects.toThrow('Database error');
 	});
 
 	it('should get property by id', async () => {
@@ -128,6 +154,13 @@ describe('PostgresPropertyRepository', () => {
 		expect(mockDb.select).toHaveBeenCalled();
 		expect(mockDb.where).toHaveBeenCalled();
 		expect(result).toBeNull();
+	});
+
+	it('should handle database errors during get property by id', async () => {
+		const propertyId = 'property1';
+		mockDb.select().from().where().execute.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getPropertyById(propertyId)).rejects.toThrow('Database error');
 	});
 
 	it('should update a property', async () => {
@@ -168,6 +201,16 @@ describe('PostgresPropertyRepository', () => {
 		expect(result).toBeNull();
 	});
 
+	it('should handle database errors during update', async () => {
+		const propertyId = 'property1';
+		const updateData = { name: 'Updated Property' };
+		mockDb.update().set().where().returning.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.updateProperty(propertyId, updateData)).rejects.toThrow(
+			'Database error'
+		);
+	});
+
 	it('should delete a property', async () => {
 		const propertyId = 'property1';
 		mockDb.delete().where.mockResolvedValue([{}]);
@@ -188,5 +231,65 @@ describe('PostgresPropertyRepository', () => {
 		expect(mockDb.delete).toHaveBeenCalled();
 		expect(mockDb.where).toHaveBeenCalled();
 		expect(result).toBe(false);
+	});
+
+	it('should handle database errors during delete', async () => {
+		const propertyId = 'property1';
+		mockDb.delete.mockReturnThis();
+		mockDb.where.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.deleteProperty(propertyId)).rejects.toThrow('Database error');
+	});
+
+	it('should get property value for a device', async () => {
+		const propertyId = 'property1';
+		const deviceId = 1;
+		const mockValue = { intValue: 123 };
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.where.mockReturnThis();
+		mockDb.limit.mockReturnThis();
+		mockDb.execute.mockResolvedValue([mockValue]);
+
+		const result = await repository.getPropertyValueForDevice(propertyId, deviceId);
+
+		expect(mockDb.select).toHaveBeenCalled();
+		expect(mockDb.from).toHaveBeenCalledWith(devicePropertiesTable);
+		expect(mockDb.where).toHaveBeenCalledWith(
+			and(
+				eq(devicePropertiesTable.propertyId, propertyId),
+				eq(devicePropertiesTable.deviceId, deviceId)
+			)
+		);
+		expect(mockDb.limit).toHaveBeenCalledWith(1);
+		expect(result).toBe(mockValue.intValue);
+	});
+
+	it('should return null if property value for a device is not found', async () => {
+		const propertyId = 'property1';
+		const deviceId = 1;
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.where.mockReturnThis();
+		mockDb.limit.mockReturnThis();
+		mockDb.execute.mockResolvedValue([]);
+
+		const result = await repository.getPropertyValueForDevice(propertyId, deviceId);
+
+		expect(result).toBeNull();
+	});
+
+	it('should handle database errors during get property value for device', async () => {
+		const propertyId = 'property1';
+		const deviceId = 1;
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.where.mockReturnThis();
+		mockDb.limit.mockReturnThis();
+		mockDb.execute.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getPropertyValueForDevice(propertyId, deviceId)).rejects.toThrow(
+			'Database error'
+		);
 	});
 });

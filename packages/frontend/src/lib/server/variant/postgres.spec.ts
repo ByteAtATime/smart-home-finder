@@ -67,6 +67,15 @@ describe('PostgresVariantRepository', () => {
 		expect(insertedId).toBe(mockVariants[0].id);
 	});
 
+	it('should handle database errors during insert', async () => {
+		const mockVariant = new Variant(mockVariants[0], repository);
+		mockDb.insert.mockReturnThis();
+		mockDb.values.mockReturnThis();
+		mockDb.returning.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.insertVariant(mockVariant)).rejects.toThrow('Database error');
+	});
+
 	it('should get a variant by ID', async () => {
 		mockDb.select.mockReturnThis();
 		mockDb.from.mockReturnThis();
@@ -91,6 +100,14 @@ describe('PostgresVariantRepository', () => {
 		expect(variant).toBeNull();
 	});
 
+	it('should handle database errors during get by ID', async () => {
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.select().from().where.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getVariantById(1)).rejects.toThrow('Database error');
+	});
+
 	it('should get variants for a device', async () => {
 		mockDb.select.mockReturnThis();
 		mockDb.from.mockReturnThis();
@@ -104,6 +121,14 @@ describe('PostgresVariantRepository', () => {
 		expect(variants.length).toBe(2);
 		expect(variants[0]).toBeInstanceOf(Variant);
 		expect(variants[1]).toBeInstanceOf(Variant);
+	});
+
+	it('should handle database errors during get variants for device', async () => {
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.select().from().where.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getVariantsForDevice(1)).resolves.toEqual([]);
 	});
 
 	it('should get variant options for a variant', async () => {
@@ -143,6 +168,21 @@ describe('PostgresVariantRepository', () => {
 		expect(options.length).toBe(2);
 		expect(options[0].value).toBe('Blue');
 		expect(options[1].value).toBe('Red');
+	});
+
+	it('should handle database errors during get variant options', async () => {
+		mockDb.select.mockReturnThis();
+		mockDb.from.mockReturnThis();
+		mockDb.innerJoin.mockReturnThis();
+		mockDb.where.mockReturnThis();
+		mockDb
+			.select()
+			.from()
+			.innerJoin()
+			.where()
+			.groupBy.mockRejectedValueOnce(new Error('Database error'));
+
+		await expect(repository.getVariantOptions(1)).rejects.toThrow('Database error');
 	});
 
 	it('should prioritize variant options from a specific device', async () => {

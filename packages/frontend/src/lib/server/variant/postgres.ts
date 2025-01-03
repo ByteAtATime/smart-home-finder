@@ -62,24 +62,29 @@ export class PostgresVariantRepository implements IVariantRepository {
 	}
 
 	async getVariantsForDevice(deviceId: number): Promise<Variant[]> {
-		const data = await db
-			.select({
-				id: variantsTable.id,
-				name: variantsTable.name,
-				createdAt: variantsTable.createdAt,
-				updatedAt: variantsTable.updatedAt
-			})
-			.from(variantsTable)
-			.where(
-				inArray(
-					variantsTable.id,
-					db
-						.select({ id: deviceVariantsTable.variantId })
-						.from(deviceVariantsTable)
-						.where(eq(deviceVariantsTable.deviceId, deviceId))
-				)
-			);
+		try {
+			const data = await db
+				.select({
+					id: variantsTable.id,
+					name: variantsTable.name,
+					createdAt: variantsTable.createdAt,
+					updatedAt: variantsTable.updatedAt
+				})
+				.from(variantsTable)
+				.where(
+					inArray(
+						variantsTable.id,
+						db
+							.select({ id: deviceVariantsTable.variantId })
+							.from(deviceVariantsTable)
+							.where(eq(deviceVariantsTable.deviceId, deviceId))
+					)
+				);
 
-		return data.map((variant) => new Variant(variant, this));
+			return data.map((variant) => new Variant(variant, this));
+		} catch (error) {
+			console.error(error);
+			return [];
+		}
 	}
 }

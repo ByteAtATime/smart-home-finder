@@ -86,6 +86,48 @@ describe('GET /api/devices/:id', () => {
 			}
 		});
 	});
+
+	it('should return 400 if the ID is not a number', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const propertyRepository = new MockPropertyRepository();
+		const listingRepository = new MockListingRepository();
+		const variantRepository = new MockVariantRepository();
+		const deviceService = new DeviceService(
+			deviceRepository,
+			propertyRepository,
+			listingRepository,
+			variantRepository
+		);
+
+		const params = { id: 'abc' };
+
+		const endpoint = await endpoint_GET({ deviceService, params });
+
+		expect(endpoint.status).toBe(400);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Invalid device ID' });
+	});
+
+	it('should return 404 if the device is not found', async () => {
+		const deviceRepository = new MockDeviceRepository();
+		const propertyRepository = new MockPropertyRepository();
+		const listingRepository = new MockListingRepository();
+		const variantRepository = new MockVariantRepository();
+		const deviceService = new DeviceService(
+			deviceRepository,
+			propertyRepository,
+			listingRepository,
+			variantRepository
+		);
+
+		const params = { id: '99' };
+
+		deviceRepository.getBaseDeviceById = vi.fn().mockResolvedValue(null);
+
+		const endpoint = await endpoint_GET({ deviceService, params });
+
+		expect(endpoint.status).toBe(404);
+		expect(await endpoint.json()).toEqual({ success: false, error: 'Device not found' });
+	});
 });
 
 describe('PATCH /api/devices/:id', () => {

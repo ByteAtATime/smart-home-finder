@@ -39,7 +39,7 @@ const resultDevice = JSON.parse(
 
 describe('devices', () => {
 	describe('GET', () => {
-		it('should return a list of devices', async () => {
+		it('should return a list of devices with default parameters', async () => {
 			const deviceRepository = new MockDeviceRepository();
 			const propertyRepository = new MockPropertyRepository();
 			const listingRepository = new MockListingRepository();
@@ -63,9 +63,12 @@ describe('devices', () => {
 				variantRepository
 			);
 
-			const query = { page: 1, pageSize: 10 };
+			const query = {
+				page: 1,
+				pageSize: 10
+			};
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
-				items: [mockDevice], // Devices without properties at repository level
+				items: [mockDevice],
 				total: 1,
 				page: query.page,
 				pageSize: query.pageSize
@@ -74,17 +77,15 @@ describe('devices', () => {
 			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 			variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
+			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
 
 			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
 
-			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
-				query.page,
-				query.pageSize,
-				{
-					deviceType: undefined,
-					protocol: undefined
-				}
-			);
+			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(1, 10, {
+				deviceType: undefined,
+				protocol: undefined,
+				priceBounds: undefined
+			});
 			expect(propertyRepository.getAllProperties).toHaveBeenCalled();
 			expect(endpoint.status).toBe(200);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
@@ -93,9 +94,88 @@ describe('devices', () => {
 				devices: [
 					{ ...resultDevice, variants: [JSON.parse(JSON.stringify(await mockVariant.toJson()))] }
 				],
+				page: 1,
+				pageSize: 10,
+				total: 1,
+				priceBounds: [0, 100]
+			});
+		});
+
+		it('should handle filters correctly', async () => {
+			const deviceRepository = new MockDeviceRepository();
+			const propertyRepository = new MockPropertyRepository();
+			const listingRepository = new MockListingRepository();
+			const variantRepository = new MockVariantRepository();
+			const deviceService = new DeviceService(
+				deviceRepository,
+				propertyRepository,
+				listingRepository,
+				variantRepository
+			);
+
+			const query = {
+				page: 2,
+				pageSize: 25,
+				deviceType: 'light,switch',
+				protocol: 'zwave',
+				priceBounds: '10,100'
+			};
+			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
+				items: [],
+				total: 0,
 				page: query.page,
-				pageSize: query.pageSize,
-				total: 1
+				pageSize: query.pageSize
+			} satisfies Paginated<DeviceData>);
+			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
+
+			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
+
+			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
+				query.page,
+				query.pageSize,
+				{
+					deviceType: ['light', 'switch'],
+					protocol: ['zwave'],
+					priceBounds: [10, 100]
+				}
+			);
+			expect(endpoint.status).toBe(200);
+		});
+
+		it('should return an empty array if no devices are found', async () => {
+			const deviceRepository = new MockDeviceRepository();
+			const propertyRepository = new MockPropertyRepository();
+			const listingRepository = new MockListingRepository();
+			const variantRepository = new MockVariantRepository();
+			const deviceService = new DeviceService(
+				deviceRepository,
+				propertyRepository,
+				listingRepository,
+				variantRepository
+			);
+
+			const query = {
+				page: 1,
+				pageSize: 10
+			};
+			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
+				items: [],
+				total: 0,
+				page: query.page,
+				pageSize: query.pageSize
+			} satisfies Paginated<DeviceData>);
+			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
+
+			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
+
+			expect(endpoint.status).toBe(200);
+			expect(await endpoint.json()).toEqual({
+				success: true,
+				devices: [],
+				page: 1,
+				pageSize: 10,
+				total: 0,
+				priceBounds: [0, 100]
 			});
 		});
 	});

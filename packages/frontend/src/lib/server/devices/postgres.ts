@@ -68,7 +68,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		const devices = await query;
 
 		return {
-			items: devices,
+			items: devices.map(({ total: _, ...device }) => ({ ...device })),
 			total: devices[0]?.total ?? 0,
 			page,
 			pageSize
