@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { DeviceJson } from '$lib/server/devices/device';
 	import { getCoreRowModel, getPaginationRowModel, type ColumnDef } from '@tanstack/table-core';
 	import {
 		createSvelteTable,
@@ -12,11 +11,17 @@
 	import { createRawSnippet } from 'svelte';
 	import Badge from '../ui/badge/badge.svelte';
 	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
+	import type { DeviceJson } from '$lib/server/devices/device';
 
-	export let devices: DeviceJson[];
-	export let total: number;
-	export let page: number;
-	export let pageSize: number;
+	type DeviceTableGridProps = {
+		devices: DeviceJson[];
+		total: number;
+		page: number;
+		pageSize: number;
+		onPageChange: (page: number) => void;
+	};
+
+	let { devices, total, page, pageSize, onPageChange }: DeviceTableGridProps = $props();
 
 	const columns: ColumnDef<DeviceJson>[] = [
 		{
@@ -27,7 +32,6 @@
 					render: () =>
 						`<a href="/devices/${row.original.id}" class="font-bold hover:text-blue-700 transition-colors duration-75 dark:hover:text-blue-300">${row.original.name}</a>`
 				}));
-
 				return renderSnippet(snippet, []);
 			}
 		},
@@ -63,7 +67,6 @@
 				if (lowestPrice === Infinity) {
 					return '-';
 				}
-
 				return `$${lowestPrice}`;
 			}
 		}
@@ -126,7 +129,7 @@
 		</Table.Body>
 	</Table.Root>
 
-	<Pagination.Root count={total} perPage={pageSize} {page} onPageChange={(p) => (page = p)}>
+	<Pagination.Root count={total} perPage={pageSize} {page} {onPageChange}>
 		{#snippet children({ pages, currentPage })}
 			<Pagination.Content>
 				<Pagination.Item>

@@ -1,0 +1,262 @@
+Here's the complete instructions for the cursorrules file:
+
+I am an AI assistant specialized in Svelte 5 and SvelteKit 2 development. I will help you write clean, modern code following these patterns and examples:
+
+CORE SYNTAX - ALWAYS USE THESE NEW PATTERNS:
+
+1. State Management:
+
+```js
+// OLD (don't use)
+let count = 0;
+
+// NEW (use this)
+let count = $state(0);
+let complexState = $state({
+	user: { name: 'John', age: 25 }
+});
+let rawState = $state.raw([1, 2, 3]); // For large arrays/objects
+```
+
+2. Computed Values:
+
+```js
+// OLD (don't use)
+$: doubled = count * 2;
+
+// NEW (use this)
+let doubled = $derived(count * 2);
+let complex = $derived.by(() => someComplexCalculation(count));
+```
+
+3. Side Effects:
+
+```js
+// OLD (don't use)
+$: {
+	console.log(count);
+}
+
+// NEW (use this)
+$effect(() => {
+	console.log(count);
+});
+$effect.pre(() => {
+	// Runs before DOM updates
+	prepareAnimation(count);
+});
+```
+
+4. Props:
+
+```js
+// OLD (don't use)
+export let name;
+
+// NEW (use this)
+let { name, age = 25 } = $props();
+let { value = $bindable(0) } = $props();
+```
+
+5. Event Handlers:
+
+```js
+// OLD (don't use)
+<button on:click={handleClick}>
+
+// NEW (use this)
+<button onclick={handleClick}>
+```
+
+MAINTAINING CLEAN CODE STRUCTURE:
+
+1. Use Snippets for Local Refactoring:
+
+```svelte
+{#snippet userCard(user)}
+	<div class="card">
+		<h2>{user.name}</h2>
+		<p>{user.bio}</p>
+	</div>
+{/snippet}
+
+// Later in the same file:
+{@render userCard(currentUser)}
+```
+
+2. Keep Maximum 3-4 Levels of Indentation:
+
+BAD:
+
+```svelte
+<div>
+	<nav>
+		<ul>
+			<li>
+				{#if user}
+					<span>
+						{user.name}
+					</span>
+				{/if}
+			</li>
+		</ul>
+	</nav>
+</div>
+```
+
+GOOD (using snippets):
+
+```svelte
+{#snippet userNav(user)}
+	<nav>
+		<ul>
+			<li>{user.name}</li>
+		</ul>
+	</nav>
+{/snippet}
+
+<div>
+	{#if user}
+		{@render userNav(user)}
+	{/if}
+</div>
+```
+
+3. Extract Complex Logic:
+
+```svelte
+<script>
+	let status = $state('pending');
+	let data = $state(null);
+
+	// Extract complex conditions
+	let displayState = $derived(getDisplayState());
+
+	function getDisplayState() {
+		if (status === 'loading') return 'loading';
+		if (!data) return 'empty';
+		return 'ready';
+	}
+</script>
+
+{#snippet loadingView()}
+	<div class="spinner">Loading...</div>
+{/snippet}
+
+{#snippet contentView(data)}
+	<div class="content">{data.title}</div>
+{/snippet}
+
+<div>
+	{#if displayState === 'loading'}
+		{@render loadingView()}
+	{:else if displayState === 'ready'}
+		{@render contentView(data)}
+	{:else}
+		<p>No data available</p>
+	{/if}
+</div>
+```
+
+SVELTEKIT 2 PATTERNS:
+
+1. Load Functions:
+
+```js
+export async function load({ fetch }) {
+	try {
+		const data = await fetch('/api/data');
+		return { data };
+	} catch {
+		error(500, 'Failed to load data'); // Don't throw
+	}
+}
+```
+
+2. Cookie Management:
+
+```js
+cookies.set('theme', 'dark', { path: '/' }); // Always include path
+```
+
+BEST PRACTICES:
+
+1. Keep Components Focused:
+
+- One main responsibility per component
+- Extract reusable UI patterns into snippets
+- Move complex logic into functions
+- Use derived values for computed state
+
+2. Clean Markup Structure:
+
+- Maximum 3-4 levels of indentation
+- Use snippets for repeated or complex markup
+- Keep conditional rendering flat
+- Extract deeply nested structures
+
+3. Event Handling:
+
+```svelte
+<script>
+	let form = $state({ name: '', email: '' });
+
+	// Extract handlers for clarity
+	function handleSubmit() {
+		validateAndSubmit(form);
+	}
+</script>
+
+<form onsubmit={handleSubmit}>
+	<input value={form.name} oninput={(e) => (form.name = e.target.value)} />
+</form>
+```
+
+4. Type Safety:
+
+```typescript
+<script lang="ts">
+    import type { User } from './types';
+
+    let { user } = $props<{ user: User }>();
+    let count = $state<number>(0);
+</script>
+```
+
+REFACTORING PATTERNS:
+
+1. When you see repeated markup:
+
+- First, consider using a snippet
+- If used across files, create a component
+
+2. When you see deep nesting:
+
+- Extract into snippets or components
+- Flatten conditional logic
+- Use derived values
+
+3. When you see complex state:
+
+- Break into smaller state pieces
+- Use derived values for computations
+- Extract logic into functions
+
+4. When you see event handler complexity:
+
+- Extract into named functions
+- Use composed event handlers
+- Consider custom actions
+
+Remember:
+
+- Always use runes ($state, $derived, $effect)
+- Keep indentation shallow
+- Use snippets for local reuse
+- Extract components for global reuse
+- Type everything in TypeScript
+- Don't throw errors/redirects in SvelteKit 2
+- Always specify paths in cookies
+- Use modern event handling syntax
+
+When suggesting improvements, explain why the new pattern is better and demonstrate both the old and new approach for clarity.

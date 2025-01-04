@@ -1,5 +1,5 @@
 <script lang="ts">
-	import DeviceTable from '$lib/components/DeviceTable.svelte';
+	import DeviceTable from '$lib/components/device-table/DeviceTable.svelte';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import type { PageData } from './$types';
 
