@@ -167,8 +167,8 @@
 </script>
 
 <div class="relative">
-	<div class="flex flex-col items-start gap-4 p-4 lg:flex-row">
-		<div class="flex w-40 flex-col gap-2">
+	<div class="flex flex-col items-start gap-8 p-4 lg:flex-row xl:gap-12">
+		<div class="flex w-48 flex-col gap-2">
 			<h2 class="text-lg font-bold">Protocol</h2>
 
 			<div class="flex items-center gap-2">

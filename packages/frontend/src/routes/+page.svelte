@@ -8,7 +8,7 @@
 
 <ThemeToggle />
 
-<main class="mx-auto max-w-screen-lg p-4">
+<main class="mx-auto max-w-screen-lg p-4 xl:max-w-screen-xl">
 	<DeviceTable
 		{devices}
 		{total}
