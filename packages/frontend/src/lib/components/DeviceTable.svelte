@@ -24,7 +24,8 @@
 		total: number;
 		page: number;
 		pageSize: number;
-		priceBounds: [number, number];
+		/** The absolute minimum and maximum prices available across all devices */
+		absolutePriceRange: [number, number];
 		properties: string[];
 	};
 
@@ -33,23 +34,25 @@
 		total,
 		page,
 		pageSize,
-		priceBounds: initialPriceBounds
+		absolutePriceRange: databasePriceRange
 	}: DeviceTableProps = $props();
 
 	let isLoading = $state(false);
 	let spinnerPromise: Promise<unknown> | null = $state(null);
 
-	let priceBounds = $state([0, initialPriceBounds[1]]);
-	let debouncedPriceBounds = $state(initialPriceBounds);
+	/** The price range currently selected by the user in the slider UI */
+	let sliderPriceRange = $state([0, databasePriceRange[1]]);
+	/** The price range used for filtering, debounced to prevent excessive API calls */
+	let filterPriceRange = $state(databasePriceRange);
 	let priceDebounceTimeout: ReturnType<typeof setTimeout>;
 
 	$effect(() => {
 		clearTimeout(priceDebounceTimeout);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		priceBounds;
+		sliderPriceRange;
 		priceDebounceTimeout = setTimeout(() => {
-			debouncedPriceBounds[0] = priceBounds[0];
-			debouncedPriceBounds[1] = priceBounds[1];
+			filterPriceRange[0] = sliderPriceRange[0];
+			filterPriceRange[1] = sliderPriceRange[1];
 		}, 500);
 	});
 
@@ -87,8 +90,8 @@
 					.join(',')
 			);
 		}
-		if (debouncedPriceBounds[0] !== 0 || debouncedPriceBounds[1] !== initialPriceBounds[1]) {
-			searchParams.set('priceBounds', debouncedPriceBounds.join(','));
+		if (filterPriceRange[0] !== 0 || filterPriceRange[1] !== databasePriceRange[1]) {
+			searchParams.set('priceBounds', filterPriceRange.join(','));
 		}
 
 		goto(`?${searchParams.toString()}`);
@@ -247,19 +250,22 @@
 			<h2 class="mt-4 text-lg font-bold">Price</h2>
 
 			<div class="relative pt-4">
-				{#each priceBounds as value}
+				{#each sliderPriceRange as value}
 					<span
 						class="absolute bottom-3 -translate-x-1/2"
-						style="left: {(value / initialPriceBounds[1]) * 100}%"
+						style="left: {(value / databasePriceRange[1]) * 100}%"
 					>
 						{value}
 					</span>
 				{/each}
 
 				<Slider
-					bind:value={priceBounds}
+					value={sliderPriceRange}
+					onValueChange={(value) => {
+						sliderPriceRange = value;
+					}}
 					min={0}
-					max={initialPriceBounds[1]}
+					max={databasePriceRange[1]}
 					step={1}
 					class="w-full"
 					aria-label="Price"

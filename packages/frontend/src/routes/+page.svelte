@@ -9,5 +9,12 @@
 <ThemeToggle />
 
 <main class="mx-auto max-w-screen-lg p-4">
-	<DeviceTable {devices} {total} {pageSize} {page} {priceBounds} properties={[]} />
+	<DeviceTable
+		{devices}
+		{total}
+		{pageSize}
+		{page}
+		absolutePriceRange={priceBounds}
+		properties={[]}
+	/>
 </main>

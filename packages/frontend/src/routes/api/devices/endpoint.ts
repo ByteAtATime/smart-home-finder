@@ -31,9 +31,9 @@ export const endpoint_GET: EndpointHandler<{
 	listingRepository: IListingRepository;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, listingRepository, query }) => {
-	const { page, pageSize, deviceType, protocol, priceBounds: priceBoundsFilter } = query;
+	const { page, pageSize, deviceType, protocol, priceBounds: filterPriceRange } = query;
 
-	const [minPrice, maxPrice] = priceBoundsFilter ?? [null, null];
+	const [minPrice, maxPrice] = filterPriceRange ?? [null, null];
 
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
@@ -45,7 +45,7 @@ export const endpoint_GET: EndpointHandler<{
 		}
 	);
 
-	const priceBounds = await listingRepository.getPriceBounds();
+	const databasePriceRange = await listingRepository.getPriceBounds();
 
 	return json({
 		success: true,
@@ -53,7 +53,7 @@ export const endpoint_GET: EndpointHandler<{
 		pageSize,
 		page,
 		devices: paginatedDevices.items,
-		priceBounds
+		priceBounds: databasePriceRange
 	});
 };
 
