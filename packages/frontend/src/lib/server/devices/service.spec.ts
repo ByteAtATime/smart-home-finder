@@ -59,6 +59,8 @@ describe('DeviceService', () => {
 					type: 'string',
 					unit: null,
 					description: null,
+					minValue: null,
+					maxValue: null,
 					createdAt: new Date(),
 					updatedAt: new Date()
 				},

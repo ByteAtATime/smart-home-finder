@@ -14,6 +14,8 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 				name: property.name,
 				type: property.type,
 				unit: property.unit,
+				minValue: property.minValue,
+				maxValue: property.maxValue,
 				description: property.description
 			})
 			.returning();

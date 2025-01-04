@@ -74,6 +74,8 @@ export const propertiesTable = pgTable('properties', {
 	type: propertyTypeEnum('type').notNull(),
 	unit: text('unit'),
 	description: text('description'),
+	minValue: real('min_value'),
+	maxValue: real('max_value'),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

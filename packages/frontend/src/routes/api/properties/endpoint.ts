@@ -27,6 +27,8 @@ export const endpoint_POST: EndpointHandler<{
 		type: body.type,
 		unit: body.unit ?? null,
 		description: body.description ?? null,
+		minValue: body.minValue ?? null,
+		maxValue: body.maxValue ?? null,
 		createdAt: new Date(),
 		updatedAt: new Date()
 	} satisfies PropertyData;

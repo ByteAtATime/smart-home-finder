@@ -44,6 +44,8 @@ describe('PostgresPropertyRepository', () => {
 			type: 'string',
 			unit: null,
 			description: null,
+			minValue: null,
+			maxValue: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		} satisfies PropertyData;
@@ -58,7 +60,9 @@ describe('PostgresPropertyRepository', () => {
 			name: newProperty.name,
 			type: newProperty.type,
 			unit: newProperty.unit,
-			description: newProperty.description
+			description: newProperty.description,
+			minValue: newProperty.minValue,
+			maxValue: newProperty.maxValue
 		});
 		expect(mockDb.returning).toHaveBeenCalled();
 		expect(result).toBe(returnedProperty.id);
@@ -71,6 +75,8 @@ describe('PostgresPropertyRepository', () => {
 			type: 'string',
 			unit: null,
 			description: null,
+			minValue: null,
+			maxValue: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		} satisfies PropertyData;
@@ -89,6 +95,8 @@ describe('PostgresPropertyRepository', () => {
 				type: 'int',
 				unit: 'unit',
 				description: 'Description 1',
+				minValue: null,
+				maxValue: null,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			},
@@ -98,6 +106,8 @@ describe('PostgresPropertyRepository', () => {
 				type: 'string',
 				unit: null,
 				description: null,
+				minValue: null,
+				maxValue: null,
 				createdAt: new Date(),
 				updatedAt: new Date()
 			}
@@ -127,6 +137,8 @@ describe('PostgresPropertyRepository', () => {
 			type: 'int',
 			unit: 'unit',
 			description: 'Description 1',
+			minValue: null,
+			maxValue: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};
@@ -172,6 +184,8 @@ describe('PostgresPropertyRepository', () => {
 			type: 'int',
 			unit: 'unit',
 			description: 'Description 1',
+			minValue: null,
+			maxValue: null,
 			createdAt: new Date(),
 			updatedAt: new Date()
 		};

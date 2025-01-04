@@ -8,6 +8,8 @@ export const propertyJsonSchema = z.object({
 	type: z.enum(['string', 'int', 'float', 'boolean']),
 	unit: z.string().nullable(),
 	description: z.string().nullable(),
+	minValue: z.number().nullable(),
+	maxValue: z.number().nullable(),
 	createdAt: z.coerce.date(),
 	updatedAt: z.coerce.date(),
 	value: z.union([z.string(), z.number(), z.boolean(), z.null()])
@@ -51,6 +53,14 @@ export class Property {
 		return this.data.description;
 	}
 
+	public get minValue(): number | null {
+		return this.data.minValue;
+	}
+
+	public get maxValue(): number | null {
+		return this.data.maxValue;
+	}
+
 	public get createdAt(): Date {
 		return this.data.createdAt;
 	}
@@ -66,6 +76,8 @@ export class Property {
 			type: this.type,
 			unit: this.unit,
 			description: this.description,
+			minValue: this.minValue,
+			maxValue: this.maxValue,
 			createdAt: this.createdAt,
 			updatedAt: this.updatedAt,
 			value: deviceId ? await this.getValueForDevice(deviceId) : null

@@ -28,7 +28,9 @@ const mockDeviceProperties = {
 		updatedAt: new Date(),
 		type: 'float',
 		unit: 'V',
-		description: null
+		description: null,
+		minValue: 0,
+		maxValue: 240
 	}
 } satisfies Record<string, PropertyData>;
 const resultDevice = JSON.parse(
@@ -79,6 +81,7 @@ describe('devices', () => {
 			variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
 			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
+			deviceRepository.getFilteredDeviceTypes = vi.fn().mockResolvedValue(['light', 'switch']);
 
 			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
 
@@ -92,9 +95,13 @@ describe('devices', () => {
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');
 			expect(await endpoint.json()).toEqual({
 				success: true,
+				availableDeviceTypes: ['light', 'switch'],
 				devices: [
 					{ ...resultDevice, variants: [JSON.parse(JSON.stringify(await mockVariant.toJson()))] }
 				],
+				propertiesByDeviceType: {
+					switch: [JSON.parse(JSON.stringify(await mockPropertyClass.toJson()))]
+				},
 				page: 1,
 				pageSize: 10,
 				total: 1,
@@ -128,7 +135,7 @@ describe('devices', () => {
 				pageSize: query.pageSize
 			} satisfies Paginated<DeviceData>);
 			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
-
+			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([]);
 			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
 
 			expect(deviceRepository.getAllDevicesPaginated).toHaveBeenCalledWith(
@@ -166,6 +173,7 @@ describe('devices', () => {
 				pageSize: query.pageSize
 			} satisfies Paginated<DeviceData>);
 			listingRepository.getPriceBounds = vi.fn().mockResolvedValue([0, 100]);
+			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([]);
 
 			const endpoint = await endpoint_GET({ deviceService, listingRepository, query });
 
@@ -173,6 +181,7 @@ describe('devices', () => {
 			expect(await endpoint.json()).toEqual({
 				success: true,
 				devices: [],
+				propertiesByDeviceType: {},
 				page: 1,
 				pageSize: 10,
 				total: 0,

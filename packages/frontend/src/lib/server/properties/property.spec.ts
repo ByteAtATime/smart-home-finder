@@ -11,6 +11,8 @@ const mockPropertyData: PropertyData = {
 	type: 'string',
 	unit: 'Test Unit',
 	description: 'Test Description',
+	minValue: 0,
+	maxValue: 240,
 	createdAt: new Date('2023-10-27T08:00:00Z'),
 	updatedAt: new Date('2023-10-27T09:00:00Z')
 };

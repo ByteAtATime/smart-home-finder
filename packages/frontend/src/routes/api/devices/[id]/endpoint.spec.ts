@@ -27,7 +27,9 @@ const mockDeviceProperties = {
 		updatedAt: new Date(),
 		type: 'float',
 		unit: 'V',
-		description: null
+		description: null,
+		minValue: 0,
+		maxValue: 240
 	}
 } satisfies Record<string, PropertyData>;
 const resultDevice = JSON.parse(

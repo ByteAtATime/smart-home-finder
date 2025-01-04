@@ -18,6 +18,8 @@
 	import { navigating } from '$app/state';
 	import type { DeviceJson } from '$lib/server/devices/device';
 	import { Slider } from './ui/slider';
+	import type { PropertyJson } from '$lib/server/properties/property';
+	import type { DeviceType } from '@smart-home-finder/common/types';
 
 	type DeviceTableProps = {
 		devices: DeviceJson[];
@@ -26,7 +28,8 @@
 		pageSize: number;
 		/** The absolute minimum and maximum prices available across all devices */
 		absolutePriceRange: [number, number];
-		properties: string[];
+		propertiesByDeviceType: Record<string, PropertyJson[]>;
+		availableDeviceTypes: DeviceType[];
 	};
 
 	let {
@@ -34,7 +37,9 @@
 		total,
 		page,
 		pageSize,
-		absolutePriceRange: databasePriceRange
+		absolutePriceRange: databasePriceRange,
+		propertiesByDeviceType,
+		availableDeviceTypes
 	}: DeviceTableProps = $props();
 
 	let isLoading = $state(false);
@@ -65,6 +70,32 @@
 		Object.fromEntries(Object.entries(DEVICE_TYPES).map(([deviceType]) => [deviceType, false]))
 	);
 
+	type PropertyFilter = {
+		propertyId: string;
+		deviceType: keyof typeof DEVICE_TYPES;
+		bounds: [number, number];
+	};
+
+	let propertyFilters = $state<PropertyFilter[]>([]);
+	let sliderValues = $state<Record<string, [number, number]>>({});
+	let propertyDebounceTimeout: ReturnType<typeof setTimeout>;
+
+	$effect(() => {
+		clearTimeout(propertyDebounceTimeout);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		sliderValues;
+		propertyDebounceTimeout = setTimeout(() => {
+			propertyFilters = Object.entries(sliderValues).map(([key, bounds]) => {
+				const [propertyId, deviceType] = key.split(':');
+				return {
+					propertyId,
+					deviceType: deviceType as keyof typeof DEVICE_TYPES,
+					bounds: bounds
+				};
+			});
+		}, 500);
+	});
+
 	$effect(() => {
 		isLoading = true;
 		spinnerPromise = new Promise((resolve) => setTimeout(resolve, 125));
@@ -92,6 +123,31 @@
 		}
 		if (filterPriceRange[0] !== 0 || filterPriceRange[1] !== databasePriceRange[1]) {
 			searchParams.set('priceBounds', filterPriceRange.join(','));
+		}
+		if (propertyFilters.length > 0) {
+			const nonDefaultFilters = propertyFilters.filter((filter) => {
+				const property = propertiesByDeviceType[filter.deviceType]?.find(
+					(p) => p.id === filter.propertyId
+				);
+				if (!property) return false;
+
+				const defaultMin = property.minValue ?? 0;
+				const defaultMax = property.maxValue ?? 100;
+
+				return filter.bounds[0] !== defaultMin || filter.bounds[1] !== defaultMax;
+			});
+
+			if (nonDefaultFilters.length > 0) {
+				searchParams.set(
+					'propertyFilters',
+					nonDefaultFilters
+						.map(
+							(filter) =>
+								`${filter.propertyId}:${filter.deviceType}:${filter.bounds[0]}-${filter.bounds[1]}`
+						)
+						.join(',')
+				);
+			}
 		}
 
 		goto(`?${searchParams.toString()}`);
@@ -231,16 +287,18 @@
 			</div>
 
 			{#each Object.entries(DEVICE_TYPES) as [deviceType, displayName]}
+				{@const typedDeviceType = deviceType as keyof typeof DEVICE_TYPES}
 				<div class="flex items-center gap-2">
 					<Checkbox
-						id={deviceType}
-						bind:checked={deviceTypeFilter[deviceType]}
-						aria-labelledby={deviceType}
+						id={typedDeviceType}
+						bind:checked={deviceTypeFilter[typedDeviceType]}
+						disabled={!availableDeviceTypes.includes(typedDeviceType)}
+						aria-labelledby={typedDeviceType}
 					/>
 					<Label
-						id={deviceType}
-						for={deviceType}
-						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+						id={typedDeviceType}
+						for={typedDeviceType}
+						class={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${!availableDeviceTypes.includes(typedDeviceType) ? 'opacity-50' : ''}`}
 					>
 						{displayName}
 					</Label>
@@ -272,6 +330,65 @@
 					type="multiple"
 				/>
 			</div>
+
+			{#if Object.keys(propertiesByDeviceType).length > 0}
+				<h2 class="mt-4 text-lg font-bold">Device Properties</h2>
+
+				{#each Object.entries(propertiesByDeviceType) as [deviceType, properties]}
+					{@const typedDeviceType = deviceType as keyof typeof DEVICE_TYPES}
+					{#if properties.length > 0}
+						<div class="mt-2">
+							<h3 class="font-medium">{DEVICE_TYPES[typedDeviceType]}</h3>
+							<div class="ml-4 flex flex-col gap-2">
+								{#each properties as property}
+									<div class="flex flex-col gap-1">
+										<Label for={`${typedDeviceType}-${property.id}`} class="text-sm font-medium">
+											{property.name}
+										</Label>
+										{#if property.type === 'int' || property.type === 'float'}
+											{@const sliderKey = `${property.id}:${typedDeviceType}`}
+											{@const currentBounds = sliderValues[sliderKey] ?? [
+												property.minValue ?? 0,
+												property.maxValue ?? 100
+											]}
+											<div class="flex flex-col gap-2">
+												<div class="relative pt-4">
+													{#each currentBounds as value}
+														<span
+															class="absolute bottom-3 -translate-x-1/2"
+															style="left: {((value - (property.minValue ?? 0)) /
+																((property.maxValue ?? 100) - (property.minValue ?? 0))) *
+																100}%"
+														>
+															{value}{property.unit ? ` ${property.unit}` : ''}
+														</span>
+													{/each}
+
+													<Slider
+														value={currentBounds}
+														onValueChange={(value) => {
+															sliderValues = {
+																...sliderValues,
+																[sliderKey]: [value[0], value[1]]
+															};
+														}}
+														min={property.minValue ?? 0}
+														max={property.maxValue ?? 100}
+														step={property.type === 'int' ? 1 : 0.1}
+														class="w-full"
+														aria-label={property.name}
+														type="multiple"
+													/>
+												</div>
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				{/each}
+			{/if}
 		</div>
 
 		<div class="w-full rounded-md border">

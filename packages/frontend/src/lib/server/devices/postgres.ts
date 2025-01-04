@@ -10,7 +10,8 @@ import {
 import {
 	deviceListingsTable,
 	devicesTable,
-	priceHistoryTable
+	priceHistoryTable,
+	devicePropertiesTable
 } from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
 import type { DeviceFilters, IDeviceRepository } from './types';
@@ -59,6 +60,25 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1]),
 				isNull(priceHistoryTable.validTo)
 			);
+		}
+
+		if (filters.propertyFilters) {
+			for (const propertyFilter of filters.propertyFilters) {
+				const valueField = devicePropertiesTable.floatValue;
+
+				const conditions = [
+					eq(devicePropertiesTable.propertyId, propertyFilter.propertyId),
+					eq(devicesTable.deviceType, propertyFilter.deviceType),
+					between(valueField, propertyFilter.bounds[0], propertyFilter.bounds[1])
+				];
+
+				const subquery = db
+					.select({ deviceId: devicePropertiesTable.deviceId })
+					.from(devicePropertiesTable)
+					.where(and(...conditions));
+
+				whereConditions.push(inArray(devicesTable.id, subquery));
+			}
 		}
 
 		if (whereConditions.length > 0) {
@@ -119,5 +139,37 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		}
 
 		return selectDeviceSchema.parse(result[0]);
+	}
+
+	async getFilteredDeviceTypes(
+		filters: Omit<DeviceFilters, 'propertyFilters'>
+	): Promise<DeviceType[]> {
+		const query = db
+			.selectDistinct({ deviceType: devicesTable.deviceType })
+			.from(devicesTable)
+			.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
+			.leftJoin(priceHistoryTable, eq(deviceListingsTable.id, priceHistoryTable.listingId));
+
+		const whereConditions = [];
+		if (filters.deviceType) {
+			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType as DeviceType[]));
+		}
+		if (filters.protocol) {
+			whereConditions.push(inArray(devicesTable.protocol, filters.protocol as DeviceProtocol[]));
+		}
+
+		if (filters.priceBounds) {
+			whereConditions.push(
+				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1]),
+				isNull(priceHistoryTable.validTo)
+			);
+		}
+
+		if (whereConditions.length > 0) {
+			query.where(and(...whereConditions));
+		}
+
+		const result = await query;
+		return result.map((r) => r.deviceType);
 	}
 }

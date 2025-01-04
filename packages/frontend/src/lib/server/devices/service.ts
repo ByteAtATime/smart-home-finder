@@ -1,4 +1,4 @@
-import type { ListingWithPrice, Paginated } from '@smart-home-finder/common/types';
+import type { ListingWithPrice, Paginated, DeviceType } from '@smart-home-finder/common/types';
 import type { DeviceFilters, IDeviceRepository } from './types';
 import type { IPropertyRepository } from '../properties/types';
 import type { IListingRepository } from '../listings/types';
@@ -32,6 +32,12 @@ export class DeviceService {
 		if (!baseDevice) return null;
 
 		return new Device(baseDevice, this);
+	}
+
+	async getFilteredDeviceTypes(
+		filters: Omit<DeviceFilters, 'propertyFilters'>
+	): Promise<DeviceType[]> {
+		return await this.deviceRepository.getFilteredDeviceTypes(filters);
 	}
 
 	async getAllDevicesWithVariantsAndProperties(

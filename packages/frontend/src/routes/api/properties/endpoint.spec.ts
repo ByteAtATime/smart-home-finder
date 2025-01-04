@@ -9,6 +9,8 @@ const mockProperty = {
 	id: 'new-property',
 	name: 'New Property',
 	type: 'string',
+	minValue: null,
+	maxValue: null,
 	unit: null,
 	description: null
 } as const;
@@ -61,6 +63,8 @@ describe('GET /api/properties', () => {
 					type: 'string',
 					unit: null,
 					description: null,
+					minValue: null,
+					maxValue: null,
 					createdAt: new Date(),
 					updatedAt: new Date()
 				},
@@ -73,6 +77,8 @@ describe('GET /api/properties', () => {
 					type: 'float',
 					unit: 'unit',
 					description: 'Description',
+					minValue: null,
+					maxValue: null,
 					createdAt: new Date(),
 					updatedAt: new Date()
 				},
