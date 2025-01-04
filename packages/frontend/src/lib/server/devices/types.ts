@@ -1,4 +1,14 @@
+import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
 import type { DeviceData, Paginated, UpdateDevice } from '@smart-home-finder/common/types';
+import { z } from 'zod';
+
+export const deviceFiltersSchema = z.object({
+	deviceType: z.array(z.enum(deviceTypeEnum.enumValues)).optional(),
+	protocol: z.array(z.enum(protocolEnum.enumValues)).optional(),
+	priceBounds: z.array(z.number()).optional()
+});
+
+export type DeviceFilters = z.infer<typeof deviceFiltersSchema>;
 
 export interface IDeviceRepository {
 	getAllDevices(): Promise<DeviceData[]>;
@@ -15,6 +25,6 @@ export interface IDeviceRepository {
 	getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string[]; protocol?: string[]; priceBounds?: [number, number] }
+		filters?: DeviceFilters
 	): Promise<Paginated<DeviceData>>;
 }

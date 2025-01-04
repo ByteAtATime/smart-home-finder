@@ -1,7 +1,7 @@
 import { MockAuthProvider } from '$lib/server/auth/mock';
 import { MockDeviceRepository } from '$lib/server/devices/mock';
 import { describe, expect, it, vi } from 'vitest';
-import { endpoint_GET, endpoint_POST } from './endpoint';
+import { endpoint_GET, endpoint_POST, querySchema } from './endpoint';
 import type { DeviceData, Paginated, PropertyData } from '@smart-home-finder/common/types';
 import { DeviceService } from '$lib/server/devices/service';
 import { MockPropertyRepository } from '$lib/server/properties/mock';
@@ -9,6 +9,7 @@ import { MockListingRepository } from '$lib/server/listings/mock';
 import { Property } from '$lib/server/properties/property';
 import { MockVariantRepository } from '$lib/server/variant/mock';
 import { Variant } from '$lib/server/variant/variant';
+import type { z } from 'zod';
 
 const mockDevice = {
 	id: 1,
@@ -116,10 +117,10 @@ describe('devices', () => {
 			const query = {
 				page: 2,
 				pageSize: 25,
-				deviceType: 'light,switch',
-				protocol: 'zwave',
-				priceBounds: '10,100'
-			};
+				deviceType: ['light', 'switch'],
+				protocol: ['zwave'],
+				priceBounds: [10, 100]
+			} satisfies z.infer<typeof querySchema>;
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
 				items: [],
 				total: 0,

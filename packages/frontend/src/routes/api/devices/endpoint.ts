@@ -1,6 +1,6 @@
 import type { IAuthProvider } from '$lib/server/auth/types';
 import { type DeviceService } from '$lib/server/devices/service';
-import type { IDeviceRepository } from '$lib/server/devices/types';
+import { type IDeviceRepository } from '$lib/server/devices/types';
 import type { EndpointHandler } from '$lib/server/endpoints';
 import type { IListingRepository } from '$lib/server/listings/types';
 import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
@@ -12,40 +12,18 @@ export const querySchema = z.object({
 	pageSize: z.coerce.number().min(1).max(100).optional().default(10),
 	deviceType: z
 		.string()
-		.refine(
-			(value) => {
-				const parts = value.split(',');
-				return parts.every((part) =>
-					(Object.values(deviceTypeEnum.enumValues) as string[]).includes(part)
-				);
-			},
-			{
-				message:
-					'Each value must be one of: ' +
-					(Object.values(deviceTypeEnum.enumValues) as string[]).join(', ')
-			}
-		)
-		.optional(),
+		.optional()
+		.transform((val) => val?.split(','))
+		.pipe(z.array(z.enum(deviceTypeEnum.enumValues)).optional()),
 	protocol: z
 		.string()
-		.refine(
-			(value) => {
-				const parts = value.split(',');
-				return parts.every((part) =>
-					(Object.values(protocolEnum.enumValues) as string[]).includes(part)
-				);
-			},
-			{
-				message:
-					'Each value must be one of: ' +
-					(Object.values(protocolEnum.enumValues) as string[]).join(', ')
-			}
-		)
-		.optional(),
+		.optional()
+		.transform((val) => val?.split(','))
+		.pipe(z.array(z.enum(protocolEnum.enumValues)).optional()),
 	priceBounds: z
 		.string()
-		.regex(/^\d+,\d+$/)
 		.optional()
+		.transform((val) => val?.split(',').map(Number))
 });
 
 export const endpoint_GET: EndpointHandler<{
@@ -55,16 +33,14 @@ export const endpoint_GET: EndpointHandler<{
 }> = async ({ deviceService, listingRepository, query }) => {
 	const { page, pageSize, deviceType, protocol, priceBounds: priceBoundsFilter } = query;
 
-	const [minPrice, maxPrice] = priceBoundsFilter
-		? priceBoundsFilter.split(',').map(Number)
-		: [null, null];
+	const [minPrice, maxPrice] = priceBoundsFilter ?? [null, null];
 
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
 		pageSize,
 		{
-			deviceType: deviceType ? deviceType.split(',') : undefined,
-			protocol: protocol ? protocol.split(',') : undefined,
+			deviceType: deviceType ?? undefined,
+			protocol: protocol ?? undefined,
 			priceBounds: minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined
 		}
 	);

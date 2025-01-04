@@ -13,7 +13,7 @@ import {
 	priceHistoryTable
 } from '@smart-home-finder/common/schema';
 import { db } from '$lib/server/db';
-import type { IDeviceRepository } from './types';
+import type { DeviceFilters, IDeviceRepository } from './types';
 
 export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevices(): Promise<DeviceData[]> {
@@ -23,7 +23,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevicesPaginated(
 		page: number,
 		pageSize: number,
-		filters: { deviceType?: string[]; protocol?: string[]; priceBounds?: [number, number] } = {}
+		filters: DeviceFilters = {}
 	): Promise<Paginated<DeviceData>> {
 		const offset = (page - 1) * pageSize;
 
