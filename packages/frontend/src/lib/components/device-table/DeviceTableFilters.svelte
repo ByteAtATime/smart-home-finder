@@ -60,7 +60,7 @@
 	});
 </script>
 
-<div class="flex w-48 flex-col gap-2">
+<div class="flex w-full flex-col gap-8 sm:w-56">
 	<FilterCheckboxGroup
 		title="Protocol"
 		items={PROTOCOL_DISPLAY_NAMES}

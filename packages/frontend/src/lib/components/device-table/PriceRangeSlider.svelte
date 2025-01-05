@@ -22,10 +22,13 @@
 <div class="flex flex-col gap-2">
 	<h2 class="text-lg font-bold">Price</h2>
 
-	<div class="relative pt-4">
+	<div class="relative pt-6">
 		{#each sliderPriceRange as value}
-			<span class="absolute bottom-3 -translate-x-1/2" style="left: {(value / maxPrice) * 100}%">
-				{value}
+			<span
+				class="absolute bottom-4 -translate-x-1/2 text-sm"
+				style="left: {(value / maxPrice) * 100}%"
+			>
+				${value}
 			</span>
 		{/each}
 
