@@ -48,7 +48,7 @@
 				{@const typedDeviceType = deviceType as DeviceType}
 				{#if properties.length > 0}
 					<Accordion.Item value={deviceType} class="bg-muted -mx-4 rounded-2xl border-b-0 px-4">
-						<Accordion.Trigger class="text-lg font-bold">
+						<Accordion.Trigger class="text-lg font-bold leading-none">
 							{DEVICE_TYPES[typedDeviceType]}
 						</Accordion.Trigger>
 						<Accordion.Content>
@@ -91,7 +91,7 @@
 													min={property.minValue ?? 0}
 													max={property.maxValue ?? 100}
 													step={property.type === 'int' ? 1 : 0.1}
-													class="w-full"
+													class="[&>span]:bg-background w-full"
 													aria-label={property.name}
 													type="multiple"
 												/>
