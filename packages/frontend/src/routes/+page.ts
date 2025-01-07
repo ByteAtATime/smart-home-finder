@@ -18,14 +18,24 @@ export const load: PageLoad = async ({ fetch, url }) => {
 		searchParams.set('protocol', protocol);
 	}
 
-	const priceBounds = url.searchParams.get('priceBounds');
-	if (priceBounds) {
-		searchParams.set('priceBounds', priceBounds);
+	const minPrice = url.searchParams.get('minPrice');
+	if (minPrice) {
+		searchParams.set('minPrice', minPrice);
+	}
+
+	const maxPrice = url.searchParams.get('maxPrice');
+	if (maxPrice) {
+		searchParams.set('maxPrice', maxPrice);
 	}
 
 	const propertyFilters = url.searchParams.get('propertyFilters');
 	if (propertyFilters) {
 		searchParams.set('propertyFilters', propertyFilters);
+	}
+
+	const search = url.searchParams.get('search');
+	if (search) {
+		searchParams.set('search', search);
 	}
 
 	const response = await fetch(`/api/devices?${searchParams.toString()}`);

@@ -21,10 +21,9 @@ export const querySchema = z.object({
 		.optional()
 		.transform((val) => val?.split(','))
 		.pipe(z.array(z.enum(protocolEnum.enumValues)).optional()),
-	priceBounds: z
-		.string()
-		.optional()
-		.transform((val) => val?.split(',').map(Number)),
+	minPrice: z.coerce.number().optional(),
+	maxPrice: z.coerce.number().optional(),
+	search: z.string().optional(),
 	propertyFilters: z
 		.string()
 		.optional()
@@ -57,31 +56,42 @@ export const endpoint_GET: EndpointHandler<{
 	listingRepository: IListingRepository;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, listingRepository, query }) => {
-	const {
-		page,
-		pageSize,
-		deviceType,
-		protocol,
-		priceBounds: filterPriceRange,
-		propertyFilters
-	} = query;
+	const { page, pageSize, deviceType, protocol, minPrice, maxPrice, search, propertyFilters } =
+		query;
 
-	const [minPrice, maxPrice] = filterPriceRange ?? [null, null];
+	const filters = {
+		...(deviceType && { deviceType }),
+		...(protocol && { protocol }),
+		...(minPrice !== undefined && { minPrice }),
+		...(maxPrice !== undefined && { maxPrice }),
+		...(search && { search }),
+		...(propertyFilters && {
+			propertyFilters: propertyFilters.map((filter) => ({
+				propertyId: filter.propertyId,
+				deviceType: filter.deviceType,
+				bounds: filter.bounds
+			}))
+		})
+	};
+
+	const priceBounds = minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined;
 
 	const filteredDeviceTypes = await deviceService.getFilteredDeviceTypes({
-		deviceType: deviceType ?? undefined,
-		protocol: protocol ?? undefined,
-		priceBounds: minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined
+		deviceType: filters.deviceType ?? undefined,
+		protocol: filters.protocol ?? undefined,
+		priceBounds,
+		search: filters.search
 	});
 
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
 		pageSize,
 		{
-			deviceType: deviceType ?? undefined,
-			protocol: protocol ?? undefined,
-			priceBounds: minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined,
-			propertyFilters: propertyFilters ?? undefined
+			deviceType: filters.deviceType ?? undefined,
+			protocol: filters.protocol ?? undefined,
+			priceBounds,
+			propertyFilters: filters.propertyFilters ?? undefined,
+			search: filters.search
 		}
 	);
 
@@ -130,7 +140,7 @@ function getDeviceTypesForProperty(
 ): (typeof deviceTypeEnum.enumValues)[number][] {
 	switch (propertyId) {
 		case 'voltage':
-			return ['switch'];
+			return ['switch', 'plug'];
 		case 'color':
 			return ['light'];
 		case 'power':

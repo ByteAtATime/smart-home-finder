@@ -11,6 +11,7 @@ export const deviceFiltersSchema = z.object({
 	deviceType: z.array(z.enum(deviceTypeEnum.enumValues)).optional(),
 	protocol: z.array(z.enum(protocolEnum.enumValues)).optional(),
 	priceBounds: z.array(z.number()).optional(),
+	search: z.string().optional(),
 	propertyFilters: z
 		.array(
 			z.object({

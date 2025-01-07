@@ -1,4 +1,4 @@
-import { count, eq, and, sql, inArray, between, isNull } from 'drizzle-orm';
+import { count, eq, and, sql, inArray, between, isNull, ilike } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	type DeviceData,
@@ -60,6 +60,10 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1]),
 				isNull(priceHistoryTable.validTo)
 			);
+		}
+
+		if (filters.search) {
+			whereConditions.push(ilike(devicesTable.name, `%${filters.search}%`));
 		}
 
 		if (filters.propertyFilters) {

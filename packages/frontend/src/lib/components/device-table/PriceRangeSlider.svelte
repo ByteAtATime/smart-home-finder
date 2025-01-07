@@ -13,6 +13,10 @@
 
 	$effect(() => {
 		clearTimeout(debounceTimeout);
+
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		sliderPriceRange;
+
 		debounceTimeout = setTimeout(() => {
 			onPriceChange(sliderPriceRange);
 		}, 500);

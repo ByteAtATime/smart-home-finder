@@ -5,6 +5,7 @@
 	import FilterCheckboxGroup from './FilterCheckboxGroup.svelte';
 	import PriceRangeSlider from './PriceRangeSlider.svelte';
 	import PropertyFilters from './PropertyFilters.svelte';
+	import SearchBar from './SearchBar.svelte';
 
 	type DeviceTableFiltersProps = {
 		propertiesByDeviceType: Record<string, PropertyJson[]>;
@@ -19,6 +20,7 @@
 				deviceType: DeviceType;
 				bounds: [number, number];
 			}>;
+			searchQuery: string;
 		}) => void;
 	};
 
@@ -45,22 +47,30 @@
 			bounds: [number, number];
 		}>
 	>([]);
+	let searchQuery = $state('');
 
 	$effect(() => {
 		onFiltersChange({
 			protocols: Object.entries(protocolFilter)
-				.filter(([_, value]) => value)
+				.filter(([_, checked]) => checked)
 				.map(([protocol]) => protocol),
 			deviceTypes: Object.entries(deviceTypeFilter)
-				.filter(([_, value]) => value)
+				.filter(([_, checked]) => checked)
 				.map(([deviceType]) => deviceType),
 			priceRange,
-			propertyFilters
+			propertyFilters,
+			searchQuery
 		});
 	});
+
+	function handleSearch(query: string) {
+		searchQuery = query;
+	}
 </script>
 
 <div class="flex w-full flex-col gap-8 sm:w-56">
+	<SearchBar onSearch={handleSearch} />
+
 	<FilterCheckboxGroup
 		title="Protocol"
 		items={PROTOCOL_DISPLAY_NAMES}

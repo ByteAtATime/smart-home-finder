@@ -126,7 +126,8 @@ describe('devices', () => {
 				pageSize: 25,
 				deviceType: ['light', 'switch'],
 				protocol: ['zwave'],
-				priceBounds: [10, 100]
+				minPrice: 10,
+				maxPrice: 100
 			} satisfies z.infer<typeof querySchema>;
 			deviceRepository.getAllDevicesPaginated = vi.fn().mockResolvedValue({
 				items: [],

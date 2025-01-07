@@ -36,6 +36,7 @@
 			deviceType: DeviceType;
 			bounds: [number, number];
 		}>;
+		searchQuery: string;
 	}) {
 		const searchParams = new URLSearchParams();
 		searchParams.set('page', page.toString());
@@ -48,7 +49,11 @@
 			searchParams.set('deviceType', filters.deviceTypes.join(','));
 		}
 		if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== databasePriceRange[1]) {
-			searchParams.set('priceBounds', filters.priceRange.join(','));
+			searchParams.set('minPrice', filters.priceRange[0].toString());
+			searchParams.set('maxPrice', filters.priceRange[1].toString());
+		}
+		if (filters.searchQuery) {
+			searchParams.set('search', filters.searchQuery);
 		}
 
 		const nonDefaultFilters = filters.propertyFilters.filter((filter) => {
@@ -75,7 +80,7 @@
 			);
 		}
 
-		goto(`?${searchParams.toString()}`);
+		goto(`?${searchParams.toString()}`, { keepFocus: true });
 	}
 
 	function handlePageChange(newPage: number) {
