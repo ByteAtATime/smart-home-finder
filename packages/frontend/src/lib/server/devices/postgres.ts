@@ -1,4 +1,4 @@
-import { count, eq, and, sql, inArray, between, isNull, ilike } from 'drizzle-orm';
+import { count, eq, and, sql, inArray, between, isNull, ilike, or, ne } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	type DeviceData,
@@ -69,19 +69,23 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		if (filters.propertyFilters) {
 			for (const propertyFilter of filters.propertyFilters) {
 				const valueField = devicePropertiesTable.floatValue;
-
-				const conditions = [
-					eq(devicePropertiesTable.propertyId, propertyFilter.propertyId),
-					eq(devicesTable.deviceType, propertyFilter.deviceType),
-					between(valueField, propertyFilter.bounds[0], propertyFilter.bounds[1])
-				];
-
 				const subquery = db
 					.select({ deviceId: devicePropertiesTable.deviceId })
 					.from(devicePropertiesTable)
-					.where(and(...conditions));
+					.where(
+						and(
+							eq(devicePropertiesTable.propertyId, propertyFilter.propertyId),
+							eq(devicesTable.deviceType, propertyFilter.deviceType),
+							between(valueField, propertyFilter.bounds[0], propertyFilter.bounds[1])
+						)
+					);
 
-				whereConditions.push(inArray(devicesTable.id, subquery));
+				whereConditions.push(
+					or(
+						ne(devicesTable.deviceType, propertyFilter.deviceType),
+						inArray(devicesTable.id, subquery)
+					)
+				);
 			}
 		}
 
