@@ -1,11 +1,8 @@
 import { chromium } from 'playwright';
-import { inovelliScraper } from './scrapers/inovelli';
-import { Scraper } from './scrapers/types';
 import { db } from './db';
 import { deviceListingsTable } from '@smart-home-finder/common/schema';
 import { updatePrice } from './updatePrice';
-
-const sellerToScraper: Map<number, Scraper> = new Map([[2, inovelliScraper]]);
+import { scraperRegistry } from './scrapers/registry';
 
 async function main() {
 	const deviceListings = await db.select().from(deviceListingsTable);
@@ -14,7 +11,7 @@ async function main() {
 	const context = await browser.newContext();
 
 	for (const listing of deviceListings) {
-		const scraper = sellerToScraper.get(listing.sellerId);
+		const scraper = await scraperRegistry.getScraperForSeller(listing.sellerId);
 		if (!scraper) {
 			console.error(`No scraper found for seller ${listing.sellerId}`);
 			continue;

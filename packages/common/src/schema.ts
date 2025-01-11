@@ -114,6 +114,7 @@ export const sellersTable = pgTable('sellers', {
 	id: serial('id').primaryKey(),
 	name: text('name').notNull(),
 	website: text('website'),
+	scraperId: text('scraper_id').notNull(),
 	createdAt: timestamp('created_at').notNull().defaultNow(),
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });

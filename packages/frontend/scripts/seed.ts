@@ -141,7 +141,8 @@ async function main() {
 		.insert(schema.sellersTable)
 		.values({
 			name: 'Inovelli',
-			website: 'https://inovelli.com'
+			website: 'https://inovelli.com',
+			scraperId: 'inovelli'
 		})
 		.returning();
 
