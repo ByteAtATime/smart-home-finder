@@ -57,14 +57,16 @@ export const actions = {
 				})
 				.returning();
 
-			// Create initial price history entry
-			await db.insert(priceHistoryTable).values({
-				listingId: listing.id,
-				price: form.data.price,
-				inStock: form.data.inStock === 'true',
-				validFrom: new Date(),
-				validTo: null
-			});
+			if (form.data.price !== 0) {
+				// Create initial price history entry
+				await db.insert(priceHistoryTable).values({
+					listingId: listing.id,
+					price: form.data.price,
+					inStock: form.data.inStock === 'true',
+					validFrom: new Date(),
+					validTo: null
+				});
+			}
 
 			return { form };
 		} catch (err) {
