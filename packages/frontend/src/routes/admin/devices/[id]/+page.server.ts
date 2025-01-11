@@ -1,6 +1,5 @@
 import { superValidate } from 'sveltekit-superforms/server';
 import type { Actions, PageServerLoad } from './$types';
-import { z } from 'zod';
 import { zod } from 'sveltekit-superforms/adapters';
 import { error, fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
@@ -17,30 +16,7 @@ import {
 import { and, eq } from 'drizzle-orm';
 import { PostgresDeviceRepository } from '$lib/server/devices/postgres';
 import { PostgresPropertyRepository } from '$lib/server/properties/postgres';
-
-export const schema = z.object({
-	name: z.string().min(1, 'Name is required'),
-	deviceType: z.enum(deviceTypeEnum.enumValues, {
-		required_error: 'Device type is required',
-		invalid_type_error: 'Invalid device type'
-	}),
-	protocol: z.enum(protocolEnum.enumValues, {
-		required_error: 'Protocol is required',
-		invalid_type_error: 'Invalid protocol'
-	}),
-	images: z.array(z.string().url('Must be a valid URL')).default([]),
-	variants: z
-		.array(
-			z.object({
-				variantId: z.number(),
-				value: z.string().min(1, 'Variant value is required')
-			})
-		)
-		.default([]),
-	properties: z
-		.record(z.string(), z.union([z.number(), z.string(), z.boolean()]).nullable())
-		.default({})
-});
+import { schema } from './schema';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const deviceId = parseInt(params.id);

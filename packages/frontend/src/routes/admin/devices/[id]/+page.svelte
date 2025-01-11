@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { superForm, type ValidationErrors } from 'sveltekit-superforms/client';
-	import { schema } from './+page.server';
+	import { schema } from './schema';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
