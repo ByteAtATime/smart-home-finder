@@ -46,6 +46,14 @@ export class ClerkAuthProvider implements IAuthProvider {
 			where: eq(usersTable.authProviderId, clerkUserId)
 		});
 
-		return user?.isAdmin ?? false;
+		if (!user) {
+			await db.insert(usersTable).values({
+				authProvider: 'clerk',
+				authProviderId: clerkUserId
+			});
+			return false;
+		}
+
+		return user.isAdmin ?? false;
 	}
 }

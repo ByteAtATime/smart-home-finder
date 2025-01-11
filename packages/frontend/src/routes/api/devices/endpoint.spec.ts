@@ -77,6 +77,7 @@ describe('devices', () => {
 				pageSize: query.pageSize
 			} satisfies Paginated<DeviceData>);
 
+			propertyRepository.getDeviceProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 			propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 			variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 			propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
@@ -90,6 +91,7 @@ describe('devices', () => {
 				protocol: undefined,
 				priceBounds: undefined
 			});
+			expect(propertyRepository.getDeviceProperties).toHaveBeenCalled();
 			expect(propertyRepository.getAllProperties).toHaveBeenCalled();
 			expect(endpoint.status).toBe(200);
 			expect(endpoint.headers.get('Content-Type')).toBe('application/json');

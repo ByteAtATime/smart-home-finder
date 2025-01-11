@@ -2,7 +2,7 @@ import { db } from '../db';
 import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/common/schema';
 import type { IPropertyRepository } from './types';
 import { selectPropertySchema, type UpdateProperty } from '@smart-home-finder/common/types';
-import { eq, sql, and } from 'drizzle-orm';
+import { eq, sql, and, getTableColumns } from 'drizzle-orm';
 import { Property } from './property';
 
 export class PostgresPropertyRepository implements IPropertyRepository {
@@ -25,6 +25,17 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 
 	async getAllProperties(): Promise<Property[]> {
 		const properties = await db.query.propertiesTable.findMany();
+		return properties.map((p) => new Property(selectPropertySchema.parse(p), this));
+	}
+
+	async getDeviceProperties(deviceId: number): Promise<Property[]> {
+		const properties = await db
+			.select(getTableColumns(propertiesTable))
+			.from(propertiesTable)
+			.innerJoin(devicePropertiesTable, eq(devicePropertiesTable.propertyId, propertiesTable.id))
+			.where(eq(devicePropertiesTable.deviceId, deviceId))
+			.execute();
+
 		return properties.map((p) => new Property(selectPropertySchema.parse(p), this));
 	}
 

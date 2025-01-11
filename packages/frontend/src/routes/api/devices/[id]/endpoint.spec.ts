@@ -67,14 +67,14 @@ describe('GET /api/devices/:id', () => {
 
 		deviceRepository.getBaseDeviceById = vi.fn().mockResolvedValue(mockDevice);
 		propertyRepository.getPropertyValueForDevice = vi.fn().mockResolvedValue(123.45);
-		propertyRepository.getAllProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
+		propertyRepository.getDeviceProperties = vi.fn().mockResolvedValue([mockPropertyClass]);
 		variantRepository.getVariantsForDevice = vi.fn().mockResolvedValue([mockVariant]);
 		listingRepository.getDevicePrices = vi.fn().mockResolvedValue([]);
 
 		const endpoint = await endpoint_GET({ deviceService, params });
 
 		expect(deviceRepository.getBaseDeviceById).toHaveBeenCalledWith(1);
-		expect(propertyRepository.getAllProperties).toHaveBeenCalledWith();
+		expect(propertyRepository.getDeviceProperties).toHaveBeenCalled();
 		expect(listingRepository.getDevicePrices).toHaveBeenCalledWith(1);
 		expect(propertyRepository.getPropertyValueForDevice).toHaveBeenCalledWith('voltage', 1);
 		expect(endpoint.status).toBe(200);

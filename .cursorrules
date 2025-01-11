@@ -54,7 +54,7 @@ $effect.pre(() => {
 export let name;
 
 // NEW (use this)
-let { name, age = 25 } = $props();
+let { name, age = 25 }: PropsType = $props();
 let { value = $bindable(0) } = $props();
 ```
 

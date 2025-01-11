@@ -12,6 +12,7 @@ export interface IPropertyRepository {
 	updateProperty(id: string, propertyData: UpdateProperty): Promise<Property | null>;
 	deleteProperty(id: string): Promise<boolean>;
 	getAllProperties(): Promise<Property[]>;
+	getDeviceProperties(deviceId: number): Promise<Property[]>;
 	getPropertyById(id: string): Promise<Property | null>;
 	getPropertyValueForDevice(
 		propertyId: string,

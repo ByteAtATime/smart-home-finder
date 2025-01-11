@@ -15,8 +15,17 @@ export class DeviceService {
 		private variantRepository: IVariantRepository
 	) {}
 
+	async getAllDevices(): Promise<Device[]> {
+		const deviceData = await this.deviceRepository.getAllDevices();
+		return deviceData.map((device) => new Device(device, this));
+	}
+
 	async getAllProperties(): Promise<Property[]> {
 		return await this.propertyRepository.getAllProperties();
+	}
+
+	async getDeviceProperties(id: number): Promise<Property[]> {
+		return await this.propertyRepository.getDeviceProperties(id);
 	}
 
 	async getDeviceListings(id: number): Promise<ListingWithPrice[]> {

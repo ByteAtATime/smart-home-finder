@@ -68,7 +68,7 @@ export class Device {
 
 	public async getProperties(): Promise<Property[]> {
 		if (this._properties === null) {
-			this._properties = await this.service.getAllProperties();
+			this._properties = await this.service.getDeviceProperties(this.data.id);
 		}
 
 		return this._properties;

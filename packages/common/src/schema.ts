@@ -133,10 +133,10 @@ export const deviceListingsTable = pgTable(
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
-	(table) => ({
-		uniqueListing: unique('unique_listing').on(table.deviceId, table.sellerId),
-		deviceSellerIdx: index('device_seller_idx').on(table.deviceId, table.sellerId)
-	})
+	(table) => [
+		unique('unique_listing').on(table.deviceId, table.sellerId),
+		index('device_seller_idx').on(table.deviceId, table.sellerId)
+	]
 );
 
 export const priceHistoryTable = pgTable(

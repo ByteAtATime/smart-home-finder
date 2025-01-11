@@ -6,6 +6,7 @@ export class MockPropertyRepository implements IPropertyRepository {
 	updateProperty = vi.fn();
 	deleteProperty = vi.fn();
 	getAllProperties = vi.fn();
+	getDeviceProperties = vi.fn();
 	getPropertyById = vi.fn();
 	getPropertyValueForDevice = vi.fn();
 }
