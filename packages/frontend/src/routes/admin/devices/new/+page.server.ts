@@ -49,8 +49,8 @@ export const load = (async (_event) => {
 			optionValue: variantOptionsTable.value
 		})
 		.from(variantsTable)
-		.innerJoin(deviceVariantsTable, eq(variantsTable.id, deviceVariantsTable.variantId))
-		.innerJoin(devicesTable, eq(deviceVariantsTable.deviceId, devicesTable.id))
+		.leftJoin(deviceVariantsTable, eq(variantsTable.id, deviceVariantsTable.variantId))
+		.leftJoin(devicesTable, eq(deviceVariantsTable.deviceId, devicesTable.id))
 		.leftJoin(variantOptionsTable, eq(variantsTable.id, variantOptionsTable.variantId))
 		.groupBy(
 			variantsTable.id,
