@@ -17,7 +17,7 @@ import { db } from '$lib/server/db';
 import type { DeviceFilters, IDeviceRepository } from './types';
 
 function buildCommonWhere(filters: DeviceFilters) {
-	const conditions: (SQL | undefined)[] = [];
+	const conditions: (SQL | undefined)[] = [isNull(priceHistoryTable.validTo)];
 
 	if (filters.deviceType) {
 		conditions.push(inArray(devicesTable.deviceType, filters.deviceType as DeviceType[]));
