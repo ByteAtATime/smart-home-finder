@@ -61,9 +61,12 @@ export const insertSellerSchema = createInsertSchema(sellersTable);
 
 export const selectDeviceListingSchema = createSelectSchema(deviceListingsTable, {
 	createdAt: z.coerce.date(),
-	updatedAt: z.coerce.date()
+	updatedAt: z.coerce.date(),
+	metadata: z.record(z.unknown()).default({})
 });
-export const insertDeviceListingSchema = createInsertSchema(deviceListingsTable);
+export const insertDeviceListingSchema = createInsertSchema(deviceListingsTable, {
+	metadata: z.record(z.unknown()).optional()
+});
 
 export const selectPriceHistorySchema = createSelectSchema(priceHistoryTable, {
 	validFrom: z.coerce.date(),
@@ -113,6 +116,7 @@ export const currentPriceSchema = z.object({
 	sellerName: z.string(),
 	url: z.string(),
 	isActive: z.boolean(),
+	metadata: z.record(z.unknown()).default({}),
 	listingCreatedAt: z.coerce.date(),
 	listingUpdatedAt: z.coerce.date(),
 

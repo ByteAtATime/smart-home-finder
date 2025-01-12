@@ -19,7 +19,7 @@ async function main() {
 
 		const page = await context.newPage();
 		await page.goto(listing.url);
-		const price = await scraper(page);
+		const price = await scraper(page, listing.metadata as Record<string, unknown>);
 
 		console.log(`Found price ${price} for ${listing.url}`);
 

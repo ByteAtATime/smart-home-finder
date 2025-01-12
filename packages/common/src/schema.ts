@@ -13,7 +13,8 @@ import {
 	timestamp,
 	unique,
 	uuid,
-	varchar
+	varchar,
+	jsonb
 } from 'drizzle-orm/pg-core';
 
 export const usersTable = pgTable('users', {
@@ -131,6 +132,7 @@ export const deviceListingsTable = pgTable(
 			.notNull(),
 		url: text('url').notNull(),
 		isActive: boolean('is_active').notNull().default(true),
+		metadata: jsonb('metadata').default({}).notNull(),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
