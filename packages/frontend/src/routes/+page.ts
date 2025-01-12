@@ -51,7 +51,7 @@ export const load: PageLoad = async ({ fetch, url }) => {
 	};
 
 	if (!data.success) {
-		throw new Error('Failed to load devices');
+		throw new Error('Failed to load devices', { cause: data });
 	}
 
 	return {

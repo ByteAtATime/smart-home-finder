@@ -34,7 +34,8 @@
 		propertyFilters: Array<{
 			propertyId: string;
 			deviceType: DeviceType;
-			bounds: [number, number];
+			bounds?: [number, number];
+			booleanValue?: boolean;
 		}>;
 		searchQuery: string;
 	}) {
@@ -62,20 +63,33 @@
 			);
 			if (!property) return false;
 
-			const defaultMin = property.minValue ?? 0;
-			const defaultMax = property.maxValue ?? 100;
+			if (filter.bounds) {
+				const defaultMin = property.minValue ?? 0;
+				const defaultMax = property.maxValue ?? 100;
+				return filter.bounds[0] !== defaultMin || filter.bounds[1] !== defaultMax;
+			}
 
-			return filter.bounds[0] !== defaultMin || filter.bounds[1] !== defaultMax;
+			if (filter.booleanValue !== undefined) {
+				return true; // Always include boolean filters when they are set
+			}
+
+			return false;
 		});
 
 		if (nonDefaultFilters.length > 0) {
 			searchParams.set(
 				'propertyFilters',
 				nonDefaultFilters
-					.map(
-						(filter) =>
-							`${filter.propertyId}:${filter.deviceType}:${filter.bounds[0]}-${filter.bounds[1]}`
-					)
+					.map((filter) => {
+						if (filter.bounds) {
+							return `${filter.propertyId}:${filter.deviceType}:${filter.bounds[0]}-${filter.bounds[1]}`;
+						}
+						if (filter.booleanValue !== undefined) {
+							return `${filter.propertyId}:${filter.deviceType}:boolean-${filter.booleanValue}`;
+						}
+						return '';
+					})
+					.filter(Boolean)
 					.join(',')
 			);
 		}

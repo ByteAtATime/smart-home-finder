@@ -17,7 +17,8 @@ export const deviceFiltersSchema = z.object({
 			z.object({
 				propertyId: z.string(),
 				deviceType: z.enum(deviceTypeEnum.enumValues),
-				bounds: z.array(z.number())
+				bounds: z.array(z.number()).optional(),
+				booleanValue: z.boolean().optional()
 			})
 		)
 		.optional()

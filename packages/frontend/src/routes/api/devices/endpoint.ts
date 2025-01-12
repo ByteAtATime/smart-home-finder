@@ -29,8 +29,15 @@ export const querySchema = z.object({
 		.optional()
 		.transform((val) =>
 			val?.split(',').map((filter) => {
-				const [propertyId, deviceType, bounds] = filter.split(':');
-				const [min, max] = bounds.split('-').map(Number);
+				const [propertyId, deviceType, value] = filter.split(':');
+				if (value.startsWith('boolean-')) {
+					return {
+						propertyId,
+						deviceType: deviceType as (typeof deviceTypeEnum.enumValues)[number],
+						booleanValue: value.replace('boolean-', '') === 'true'
+					};
+				}
+				const [min, max] = value.split('-').map(Number);
 				return {
 					propertyId,
 					deviceType: deviceType as (typeof deviceTypeEnum.enumValues)[number],
@@ -44,7 +51,8 @@ export const querySchema = z.object({
 					z.object({
 						propertyId: z.string(),
 						deviceType: z.enum(deviceTypeEnum.enumValues),
-						bounds: z.array(z.number())
+						bounds: z.array(z.number()).optional(),
+						booleanValue: z.boolean().optional()
 					})
 				)
 				.optional()
@@ -69,7 +77,8 @@ export const endpoint_GET: EndpointHandler<{
 			propertyFilters: propertyFilters.map((filter) => ({
 				propertyId: filter.propertyId,
 				deviceType: filter.deviceType,
-				bounds: filter.bounds
+				bounds: filter.bounds,
+				booleanValue: filter.booleanValue
 			}))
 		})
 	};
@@ -139,8 +148,8 @@ function getDeviceTypesForProperty(
 	propertyId: string
 ): (typeof deviceTypeEnum.enumValues)[number][] {
 	switch (propertyId) {
-		case 'voltage':
-			return ['switch', 'plug'];
+		case 'requires-neutral':
+			return ['switch'];
 		case 'color':
 			return ['light'];
 		case 'power':

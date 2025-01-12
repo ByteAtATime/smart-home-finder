@@ -73,6 +73,7 @@ export const withQuerySchema = <
 					{ status: 400 }
 				);
 			}
+			console.log(e);
 			return json({ error: 'Internal server error' }, { status: 500 });
 		}
 	};

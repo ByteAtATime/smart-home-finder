@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Label } from '../ui/label';
 	import { Slider } from '../ui/slider';
+	import * as RadioGroup from '../ui/radio-group';
 	import { DEVICE_TYPES } from '@smart-home-finder/common/constants';
 	import type { PropertyJson } from '$lib/server/properties/property';
 	import type { DeviceType } from '@smart-home-finder/common/types';
@@ -12,7 +13,8 @@
 			filters: Array<{
 				propertyId: string;
 				deviceType: DeviceType;
-				bounds: [number, number];
+				bounds?: [number, number];
+				booleanValue?: boolean;
 			}>
 		) => void;
 	};
@@ -20,22 +22,37 @@
 	let { propertiesByDeviceType, onPropertyChange }: PropertyFiltersProps = $props();
 
 	let sliderValues = $state<Record<string, [number, number]>>({});
+	let booleanValues = $state<Record<string, boolean | undefined>>({});
 	let debounceTimeout: ReturnType<typeof setTimeout>;
 
 	$effect(() => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- this makes it reactive
 		sliderValues;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions -- this makes it reactive
+		booleanValues;
 
 		clearTimeout(debounceTimeout);
 		debounceTimeout = setTimeout(() => {
-			const filters = Object.entries(sliderValues).map(([key, bounds]) => {
-				const [propertyId, deviceType] = key.split(':');
-				return {
-					propertyId,
-					deviceType: deviceType as DeviceType,
-					bounds
-				};
-			});
+			const filters = [
+				...Object.entries(sliderValues).map(([key, bounds]) => {
+					const [propertyId, deviceType] = key.split(':');
+					return {
+						propertyId,
+						deviceType: deviceType as DeviceType,
+						bounds
+					};
+				}),
+				...Object.entries(booleanValues)
+					.filter(([_, value]) => value !== undefined)
+					.map(([key, value]) => {
+						const [propertyId, deviceType] = key.split(':');
+						return {
+							propertyId,
+							deviceType: deviceType as DeviceType,
+							booleanValue: value
+						};
+					})
+			];
 			onPropertyChange(filters);
 		}, 500);
 	});
@@ -96,6 +113,40 @@
 													type="multiple"
 												/>
 											</div>
+										</div>
+									{:else if property.type === 'boolean'}
+										{@const booleanKey = `${property.id}:${typedDeviceType}`}
+										{@const currentValue = booleanValues[booleanKey] ?? undefined}
+										<div class="flex flex-col gap-1">
+											<Label
+												for={`${typedDeviceType}-${property.id}`}
+												class="text-foreground/80 flex items-center gap-2 text-sm font-semibold"
+											>
+												{property.name}
+											</Label>
+											<RadioGroup.Root
+												value={currentValue === undefined ? 'all' : currentValue.toString()}
+												onValueChange={(value) => {
+													booleanValues = {
+														...booleanValues,
+														[booleanKey]: value === 'all' ? undefined : value === 'true'
+													};
+												}}
+												class="flex gap-4"
+											>
+												<div class="flex items-center space-x-2">
+													<RadioGroup.Item value="all" id={`${booleanKey}-all`} />
+													<Label for={`${booleanKey}-all`}>All</Label>
+												</div>
+												<div class="flex items-center space-x-2">
+													<RadioGroup.Item value="true" id={`${booleanKey}-true`} />
+													<Label for={`${booleanKey}-true`}>True</Label>
+												</div>
+												<div class="flex items-center space-x-2">
+													<RadioGroup.Item value="false" id={`${booleanKey}-false`} />
+													<Label for={`${booleanKey}-false`}>False</Label>
+												</div>
+											</RadioGroup.Root>
 										</div>
 									{/if}
 								{/each}

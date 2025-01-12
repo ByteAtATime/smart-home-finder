@@ -81,11 +81,15 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 						and(
 							eq(devicePropertiesTable.propertyId, propertyFilter.propertyId),
 							eq(devicesTable.deviceType, propertyFilter.deviceType),
-							between(
-								devicePropertiesTable.floatValue,
-								propertyFilter.bounds[0],
-								propertyFilter.bounds[1]
-							)
+							propertyFilter.bounds
+								? between(
+										devicePropertiesTable.floatValue,
+										propertyFilter.bounds[0],
+										propertyFilter.bounds[1]
+									)
+								: propertyFilter.booleanValue !== undefined
+									? eq(devicePropertiesTable.booleanValue, propertyFilter.booleanValue)
+									: undefined
 						)
 					);
 
