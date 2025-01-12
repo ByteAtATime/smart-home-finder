@@ -15,7 +15,8 @@ export const formSchema = z.object({
 		.min(0, 'Price must be greater than 0'),
 	inStock: z.enum(['true', 'false'], {
 		required_error: 'Please select a stock status'
-	})
+	}),
+	metadata: z.record(z.unknown()).default({})
 }) satisfies z.ZodType<Record<string, unknown>>;
 
 export type FormSchema = typeof formSchema;

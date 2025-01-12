@@ -1,141 +1,94 @@
-import { superValidate } from 'sveltekit-superforms/server';
-import type { Actions, PageServerLoad } from './$types';
-import { formSchema } from '../new/schema';
-import { db } from '$lib/server/db';
-import {
-	deviceListingsTable,
-	devicesTable,
-	priceHistoryTable,
-	sellersTable
-} from '@smart-home-finder/common/schema';
 import { error, fail } from '@sveltejs/kit';
+import { db } from '$lib/server/db';
+import { superValidate } from 'sveltekit-superforms/server';
+import { z } from 'zod';
+import { deviceListingsTable, priceHistoryTable } from '@smart-home-finder/common/schema';
+import { eq } from 'drizzle-orm';
 import { zod } from 'sveltekit-superforms/adapters';
-import { setError } from 'sveltekit-superforms/server';
-import { and, eq, isNull } from 'drizzle-orm';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const listingId = parseInt(params.id);
-	if (isNaN(listingId)) {
-		throw error(400, 'Invalid listing ID');
-	}
+const schema = z.object({
+	deviceId: z.number().int().positive(),
+	sellerId: z.number().int().positive(),
+	url: z.string().url(),
+	price: z.number().positive(),
+	inStock: z.boolean(),
+	metadata: z.record(z.unknown()).default({})
+});
 
-	// Get the listing with its current price
-	const [listing] = await db
-		.select({
-			id: deviceListingsTable.id,
-			deviceId: deviceListingsTable.deviceId,
-			sellerId: deviceListingsTable.sellerId,
-			url: deviceListingsTable.url,
-			isActive: deviceListingsTable.isActive,
-			price: priceHistoryTable.price,
-			inStock: priceHistoryTable.inStock
-		})
-		.from(deviceListingsTable)
-		.leftJoin(
-			priceHistoryTable,
-			and(
-				eq(priceHistoryTable.listingId, deviceListingsTable.id),
-				isNull(priceHistoryTable.validTo)
-			)
-		)
-		.where(eq(deviceListingsTable.id, listingId));
+export async function load({ params }) {
+	const listing = await db.query.deviceListingsTable.findFirst({
+		where: eq(deviceListingsTable.id, parseInt(params.id))
+	});
 
 	if (!listing) {
 		throw error(404, 'Listing not found');
 	}
 
-	// Get all devices and sellers for the dropdowns
-	const devices = await db
-		.select({
-			id: devicesTable.id,
-			name: devicesTable.name
-		})
-		.from(devicesTable);
+	const currentPrice = await db.query.priceHistoryTable.findFirst({
+		where: eq(priceHistoryTable.listingId, listing.id),
+		orderBy: (price) => price.validFrom
+	});
 
-	const sellers = await db
-		.select({
-			id: sellersTable.id,
-			name: sellersTable.name
-		})
-		.from(sellersTable);
-
-	// Initialize form with existing data
 	const form = await superValidate(
 		{
-			deviceId: listing.deviceId ?? undefined,
-			sellerId: listing.sellerId ?? undefined,
-			url: listing.url ?? '',
-			price: listing.price ?? 0,
-			inStock: listing.inStock ? 'true' : 'false'
+			deviceId: listing.deviceId,
+			sellerId: listing.sellerId,
+			url: listing.url,
+			price: currentPrice?.price ?? 0,
+			inStock: currentPrice?.inStock ?? true,
+			metadata: listing.metadata as Record<string, unknown>
 		},
-		zod(formSchema)
+		zod(schema)
 	);
 
-	return {
-		form,
-		devices,
-		sellers
-	};
-};
+	const devices = await db.query.devicesTable.findMany();
+	const sellers = await db.query.sellersTable.findMany();
+
+	return { form, devices, sellers };
+}
 
 export const actions = {
 	default: async ({ request, params }) => {
-		const listingId = parseInt(params.id);
-		if (isNaN(listingId)) {
-			throw error(400, 'Invalid listing ID');
-		}
-
-		const form = await superValidate(request, zod(formSchema));
+		const form = await superValidate(request, zod(schema));
 
 		if (!form.valid) {
 			return fail(400, { form });
 		}
 
-		try {
-			// Update the listing
-			const [listing] = await db
+		const { deviceId, sellerId, url, price, inStock, metadata } = form.data;
+		const listingId = parseInt(params.id);
+
+		await db.transaction(async (tx) => {
+			// Update listing
+			await tx
 				.update(deviceListingsTable)
 				.set({
-					deviceId: form.data.deviceId,
-					sellerId: form.data.sellerId,
-					url: form.data.url
+					deviceId,
+					sellerId,
+					url,
+					metadata: metadata as Record<string, unknown>
 				})
-				.where(eq(deviceListingsTable.id, listingId))
-				.returning();
+				.where(eq(deviceListingsTable.id, listingId));
 
-			// Close current price history entry
-			await db
+			// Update price
+			const now = new Date();
+
+			// Close current price period
+			await tx
 				.update(priceHistoryTable)
-				.set({
-					validTo: new Date()
-				})
-				.where(and(eq(priceHistoryTable.listingId, listingId), isNull(priceHistoryTable.validTo)));
+				.set({ validTo: now })
+				.where(eq(priceHistoryTable.listingId, listingId));
 
-			// Create new price history entry
-			await db.insert(priceHistoryTable).values({
-				listingId: listing.id,
-				price: form.data.price,
-				inStock: form.data.inStock === 'true',
-				validFrom: new Date(),
+			// Create new price period
+			await tx.insert(priceHistoryTable).values({
+				listingId,
+				price,
+				inStock,
+				validFrom: now,
 				validTo: null
 			});
+		});
 
-			return { form };
-		} catch (err) {
-			// Handle unique constraint violation
-			if (err instanceof Error && 'code' in err && err.code === '23505') {
-				return setError(form, '', 'A listing for this device from this seller already exists');
-			}
-
-			// Handle other database errors
-			if (err instanceof Error) {
-				console.error('Failed to update listing:', err);
-				return setError(form, '', 'Failed to update listing. Please try again later.');
-			}
-
-			// Handle unknown errors
-			console.error('Unknown error:', err);
-			throw error(500, 'An unexpected error occurred');
-		}
+		return { form };
 	}
-} satisfies Actions;
+};

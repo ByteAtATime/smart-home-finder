@@ -8,6 +8,7 @@
 	import { Check, ChevronsUpDown } from 'lucide-svelte';
 	import { cn } from '$lib/utils';
 	import { goto } from '$app/navigation';
+	import { JsonEditor } from '$lib/components/ui/json-editor';
 
 	interface Device {
 		id: number;
@@ -226,6 +227,15 @@
 					{#if $errors.inStock}
 						<p class="text-destructive text-sm">{$errors.inStock}</p>
 					{/if}
+				</div>
+
+				<!-- Metadata Editor -->
+				<div class="space-y-2">
+					<JsonEditor
+						bind:value={$form.metadata}
+						error={$errors.metadata}
+						label="Metadata (for scrapers)"
+					/>
 				</div>
 			</div>
 
