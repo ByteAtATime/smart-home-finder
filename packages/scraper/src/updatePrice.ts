@@ -13,11 +13,16 @@ interface NewPriceData {
 	inStock: boolean;
 }
 
+type UpdateResult = {
+	priceHistory: PriceHistory;
+	status: 'updated' | 'unchanged';
+};
+
 export async function updatePrice({
 	listingId,
 	price,
 	inStock
-}: NewPriceData): Promise<PriceHistory> {
+}: NewPriceData): Promise<UpdateResult> {
 	return await db.transaction(async (tx) => {
 		const now = new Date();
 
@@ -42,12 +47,11 @@ export async function updatePrice({
 		if (currentPrice) {
 			// Only update if the price or stock status has changed
 			if (currentPrice.price === price && currentPrice.inStock === inStock) {
-				console.log(`  └─ Already up to date`);
 				await tx
 					.update(priceHistoryTable)
 					.set({ updatedAt: now })
 					.where(eq(priceHistoryTable.id, currentPrice.id));
-				return currentPrice;
+				return { priceHistory: currentPrice, status: 'unchanged' };
 			}
 
 			// Close the current price period
@@ -71,8 +75,6 @@ export async function updatePrice({
 
 		const [newPriceRecord] = await tx.insert(priceHistoryTable).values(newPriceData).returning();
 
-		console.log(`  └─ Updated price`);
-
-		return newPriceRecord as PriceHistory;
+		return { priceHistory: newPriceRecord as PriceHistory, status: 'updated' };
 	});
 }
