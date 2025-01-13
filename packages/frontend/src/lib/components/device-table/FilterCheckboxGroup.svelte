@@ -16,6 +16,8 @@
 		disabledItems = []
 	}: FilterCheckboxGroupProps = $props();
 
+	const idPrefix = $derived(`filter-${title.toLowerCase().replace(/\s+/g, '-')}`);
+
 	function handleSelectAll() {
 		selectedItems = Object.fromEntries(Object.keys(items).map((key) => [key, false]));
 	}
@@ -28,14 +30,14 @@
 
 	<div class="flex items-center gap-2">
 		<Checkbox
-			id="all"
+			id={`${idPrefix}-all`}
 			checked={isAllSelected}
 			onCheckedChange={handleSelectAll}
-			aria-labelledby="all"
+			aria-labelledby={`${idPrefix}-all-label`}
 		/>
 		<Label
-			id="all"
-			for="all"
+			id={`${idPrefix}-all-label`}
+			for={`${idPrefix}-all`}
 			class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 		>
 			All
@@ -45,14 +47,14 @@
 	{#each Object.entries(items) as [key, displayName]}
 		<div class="flex items-center gap-2">
 			<Checkbox
-				id={key}
+				id={`${idPrefix}-${key}`}
 				bind:checked={selectedItems[key]}
 				disabled={disabledItems.includes(key)}
-				aria-labelledby={key}
+				aria-labelledby={`${idPrefix}-${key}-label`}
 			/>
 			<Label
-				id={key}
-				for={key}
+				id={`${idPrefix}-${key}-label`}
+				for={`${idPrefix}-${key}`}
 				class={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${disabledItems.includes(key) ? 'opacity-50' : ''}`}
 			>
 				{displayName}
