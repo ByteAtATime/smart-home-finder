@@ -10,27 +10,35 @@ async function main() {
 	const browser = await chromium.launch();
 	const context = await browser.newContext();
 
-	for (const listing of deviceListings) {
+	const scrapeTasks = deviceListings.map(async (listing) => {
 		const scraper = await scraperRegistry.getScraperForSeller(listing.sellerId);
 		if (!scraper) {
 			console.error(`No scraper found for seller ${listing.sellerId}`);
-			continue;
+			return;
 		}
 
 		const page = await context.newPage();
-		await page.goto(listing.url);
-		const price = await scraper(page, listing.metadata as Record<string, unknown>);
+		try {
+			await page.goto(listing.url);
+			const price = await scraper(page, listing.metadata as Record<string, unknown>);
 
-		console.log(`Found price ${price} for ${listing.url}`);
+			console.log(`Found price ${price} for ${listing.url}`);
 
-		await updatePrice({
-			listingId: listing.id,
-			price,
-			inStock: true
-		});
-	}
+			await updatePrice({
+				listingId: listing.id,
+				price,
+				inStock: true
+			});
+		} catch (error) {
+			console.error(`Error scraping ${listing.url}:`, error);
+		} finally {
+			await page.close();
+		}
+	});
+
+	await Promise.allSettled(scrapeTasks);
 
 	await browser.close();
 }
 
-main();
+main().catch(console.error);
