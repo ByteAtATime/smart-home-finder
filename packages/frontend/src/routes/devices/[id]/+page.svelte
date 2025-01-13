@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { ExternalLinkIcon } from 'lucide-svelte';
 	import { navigating } from '$app/state';
+	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
 
 	const { data } = $props();
 	const { device } = $derived(data);
@@ -31,8 +32,8 @@
 		<Card.Header class="flex items-center justify-between">
 			<Card.Title>{device.name}</Card.Title>
 			<div class="space-x-2">
-				<Badge variant="secondary">{device.deviceType}</Badge>
-				<Badge variant="outline">{device.protocol}</Badge>
+				<Badge variant="secondary">{DEVICE_TYPES[device.deviceType]}</Badge>
+				<Badge variant="outline">{PROTOCOL_DISPLAY_NAMES[device.protocol]}</Badge>
 			</div>
 		</Card.Header>
 
