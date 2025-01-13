@@ -2,10 +2,19 @@ import { db } from '../db';
 import { devicePropertiesTable, propertiesTable } from '@smart-home-finder/common/schema';
 import type { IPropertyRepository } from './types';
 import { selectPropertySchema, type UpdateProperty } from '@smart-home-finder/common/types';
-import { eq, sql, and, getTableColumns } from 'drizzle-orm';
+import { eq, sql, and, getTableColumns, inArray } from 'drizzle-orm';
 import { Property } from './property';
 
 export class PostgresPropertyRepository implements IPropertyRepository {
+	// Cache for properties by device ID
+	private devicePropertiesCache = new Map<number, Promise<Property[]>>();
+	// Cache for property values by device ID and property ID
+	private propertyValuesCache = new Map<string, Promise<string | number | boolean | null>>();
+
+	private getValueKey(propertyId: string, deviceId: number): string {
+		return `${propertyId}:${deviceId}`;
+	}
+
 	async insertProperty(property: Property): Promise<string> {
 		const [newProperty] = await db
 			.insert(propertiesTable)
@@ -29,14 +38,91 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 	}
 
 	async getDeviceProperties(deviceId: number): Promise<Property[]> {
-		const properties = await db
-			.select(getTableColumns(propertiesTable))
+		const cached = this.devicePropertiesCache.get(deviceId);
+		if (cached) return cached;
+
+		return this.fetchDeviceProperties(deviceId);
+	}
+
+	private async fetchDeviceProperties(deviceId: number): Promise<Property[]> {
+		const results = await db
+			.select({
+				...getTableColumns(propertiesTable),
+				deviceId: devicePropertiesTable.deviceId,
+				intValue: devicePropertiesTable.intValue,
+				floatValue: devicePropertiesTable.floatValue,
+				stringValue: devicePropertiesTable.stringValue,
+				booleanValue: devicePropertiesTable.booleanValue
+			})
 			.from(propertiesTable)
 			.innerJoin(devicePropertiesTable, eq(devicePropertiesTable.propertyId, propertiesTable.id))
 			.where(eq(devicePropertiesTable.deviceId, deviceId))
 			.execute();
 
-		return properties.map((p) => new Property(selectPropertySchema.parse(p), this));
+		return results.map((row) => {
+			const { deviceId, intValue, floatValue, stringValue, booleanValue, ...propertyData } = row;
+			const property = new Property(selectPropertySchema.parse(propertyData), this);
+
+			const valueKey = this.getValueKey(property.id, deviceId);
+			const value = this.extractPropertyValue({ intValue, floatValue, stringValue, booleanValue });
+			this.propertyValuesCache.set(valueKey, Promise.resolve(value));
+
+			return property;
+		});
+	}
+
+	async preloadDeviceProperties(deviceIds: number[]): Promise<void> {
+		// Skip if all devices are already cached
+		const uncachedDeviceIds = deviceIds.filter((id) => !this.devicePropertiesCache.has(id));
+		if (uncachedDeviceIds.length === 0) return;
+
+		// Fetch properties and their values for all uncached devices in a single query
+		const results = await db
+			.select({
+				...getTableColumns(propertiesTable),
+				deviceId: devicePropertiesTable.deviceId,
+				intValue: devicePropertiesTable.intValue,
+				floatValue: devicePropertiesTable.floatValue,
+				stringValue: devicePropertiesTable.stringValue,
+				booleanValue: devicePropertiesTable.booleanValue
+			})
+			.from(propertiesTable)
+			.innerJoin(devicePropertiesTable, eq(devicePropertiesTable.propertyId, propertiesTable.id))
+			.where(inArray(devicePropertiesTable.deviceId, uncachedDeviceIds))
+			.execute();
+
+		// Group properties by device ID
+		const propertiesByDevice = new Map<number, Property[]>();
+		for (const row of results) {
+			const { deviceId, intValue, floatValue, stringValue, booleanValue, ...propertyData } = row;
+			const property = new Property(selectPropertySchema.parse(propertyData), this);
+
+			// Cache the property value
+			const valueKey = this.getValueKey(property.id, deviceId);
+			const value = this.extractPropertyValue({ intValue, floatValue, stringValue, booleanValue });
+			this.propertyValuesCache.set(valueKey, Promise.resolve(value));
+
+			if (!propertiesByDevice.has(deviceId)) {
+				propertiesByDevice.set(deviceId, []);
+			}
+			propertiesByDevice.get(deviceId)!.push(property);
+		}
+
+		// Cache the results
+		for (const deviceId of uncachedDeviceIds) {
+			const deviceProperties = propertiesByDevice.get(deviceId) || [];
+			this.devicePropertiesCache.set(deviceId, Promise.resolve(deviceProperties));
+		}
+	}
+
+	async getCachedDeviceProperties(deviceId: number): Promise<Property[]> {
+		const cached = this.devicePropertiesCache.get(deviceId);
+		if (cached) return cached;
+
+		// If not cached, fetch and cache for future use
+		const promise = this.fetchDeviceProperties(deviceId);
+		this.devicePropertiesCache.set(deviceId, promise);
+		return promise;
 	}
 
 	async getPropertyById(id: string): Promise<Property | null> {
@@ -82,6 +168,10 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 		propertyId: string,
 		deviceId: number
 	): Promise<string | number | boolean | null> {
+		const key = this.getValueKey(propertyId, deviceId);
+		const cached = this.propertyValuesCache.get(key);
+		if (cached) return cached;
+
 		const property = await db
 			.select()
 			.from(devicePropertiesTable)
@@ -98,13 +188,18 @@ export class PostgresPropertyRepository implements IPropertyRepository {
 			return null;
 		}
 
-		return this.extractPropertyValue(property[0]);
+		const value = this.extractPropertyValue(property[0]);
+		this.propertyValuesCache.set(key, Promise.resolve(value));
+		return value;
 	}
 
 	// Helper function to extract the correct value based on type
-	private extractPropertyValue(
-		property: typeof devicePropertiesTable.$inferSelect
-	): string | number | boolean | null {
+	private extractPropertyValue(property: {
+		intValue: number | null;
+		floatValue: number | null;
+		stringValue: string | null;
+		booleanValue: boolean | null;
+	}): string | number | boolean | null {
 		if (property.intValue !== null) {
 			return property.intValue;
 		} else if (property.floatValue !== null) {

@@ -18,4 +18,17 @@ export interface IPropertyRepository {
 		propertyId: string,
 		deviceId: number
 	): Promise<string | number | boolean | null>;
+
+	/**
+	 * Pre-fetches properties and their values for multiple devices.
+	 * This allows batch loading of properties to avoid N+1 queries.
+	 * @param deviceIds - Array of device IDs to pre-fetch properties for
+	 */
+	preloadDeviceProperties(deviceIds: number[]): Promise<void>;
+
+	/**
+	 * Gets property values for a device from the cache if available, otherwise fetches from DB.
+	 * Should be called after preloadDeviceProperties for optimal performance.
+	 */
+	getCachedDeviceProperties(deviceId: number): Promise<Property[]>;
 }

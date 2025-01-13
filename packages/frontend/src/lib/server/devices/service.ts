@@ -25,20 +25,36 @@ export class DeviceService {
 	}
 
 	async getDeviceProperties(id: number): Promise<Property[]> {
-		return await this.propertyRepository.getDeviceProperties(id);
+		return await this.propertyRepository.getCachedDeviceProperties(id);
 	}
 
 	async getDeviceListings(id: number): Promise<ListingWithPrice[]> {
-		return await this.listingRepository.getDevicePrices(id);
+		return await this.listingRepository.getCachedDevicePrices(id);
 	}
 
 	async getDeviceVariants(id: number): Promise<Variant[]> {
-		return await this.variantRepository.getVariantsForDevice(id);
+		return await this.variantRepository.getCachedDeviceVariants(id);
 	}
 
 	async getDeviceById(id: number): Promise<Device | null> {
 		const baseDevice = await this.deviceRepository.getBaseDeviceById(id);
 		if (!baseDevice) return null;
+
+		// Pre-fetch data for this device
+		await Promise.all([
+			this.propertyRepository.preloadDeviceProperties([id]),
+			this.variantRepository.preloadDeviceVariants([id]),
+			this.listingRepository.preloadDeviceListings([id])
+		]);
+
+		// Pre-fetch variant options
+		const variants = await this.variantRepository.getCachedDeviceVariants(id);
+		if (variants.length > 0) {
+			await this.variantRepository.preloadVariantOptions(
+				variants.map((v) => v.id),
+				id
+			);
+		}
 
 		return new Device(baseDevice, this);
 	}
@@ -61,6 +77,19 @@ export class DeviceService {
 		);
 
 		const devices = paginatedDevices.items.map((device) => new Device(device, this));
+		const deviceIds = devices.map((device) => device.id);
+
+		await Promise.all([
+			this.propertyRepository.preloadDeviceProperties(deviceIds),
+			this.variantRepository.preloadDeviceVariants(deviceIds),
+			this.listingRepository.preloadDeviceListings(deviceIds)
+		]);
+
+		const variants = await Promise.all(
+			devices.map((device) => this.variantRepository.getCachedDeviceVariants(device.id))
+		);
+		const variantIds = [...new Set(variants.flat().map((variant) => variant.id))];
+		await this.variantRepository.preloadVariantOptions(variantIds);
 
 		return {
 			...paginatedDevices,

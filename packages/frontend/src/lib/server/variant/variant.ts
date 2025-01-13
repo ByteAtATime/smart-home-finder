@@ -30,16 +30,16 @@ export class Variant {
 		return this.variant.updatedAt;
 	}
 
-	private _options: Map<number | undefined, VariantOption[]> = new Map();
-
 	public async getOptions(prioritizedDeviceId?: number): Promise<VariantOption[]> {
-		if (this._options.has(prioritizedDeviceId)) {
-			return this._options.get(prioritizedDeviceId)!;
-		}
+		const options = await this.repository.getCachedVariantOptions(this.id);
+		if (!prioritizedDeviceId) return options;
 
-		const options = await this.repository.getVariantOptions(this.id, prioritizedDeviceId);
-		this._options.set(prioritizedDeviceId, options);
-		return options;
+		// Sort options locally to prioritize the device
+		return [...options].sort((a, b) => {
+			if (a.deviceId === prioritizedDeviceId) return -1;
+			if (b.deviceId === prioritizedDeviceId) return 1;
+			return 0;
+		});
 	}
 
 	public async toJson(prioritizedDeviceId?: number): Promise<VariantJson> {

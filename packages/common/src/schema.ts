@@ -57,17 +57,25 @@ export const variantOptionsTable = pgTable('variant_options', {
 	updatedAt: timestamp('updated_at').notNull().defaultNow()
 });
 
-export const deviceVariantsTable = pgTable('device_variants', {
-	deviceId: integer('device_id')
-		.references(() => devicesTable.id)
-		.notNull(),
-	variantId: integer('variant_id')
-		.references(() => variantsTable.id)
-		.notNull(),
-	variantOptionId: integer('variant_option_id')
-		.references(() => variantOptionsTable.id)
-		.notNull()
-});
+export const deviceVariantsTable = pgTable(
+	'device_variants',
+	{
+		deviceId: integer('device_id')
+			.references(() => devicesTable.id)
+			.notNull(),
+		variantId: integer('variant_id')
+			.references(() => variantsTable.id)
+			.notNull(),
+		variantOptionId: integer('variant_option_id')
+			.references(() => variantOptionsTable.id)
+			.notNull()
+	},
+	(table) => [
+		index('device_variants_device_idx').on(table.deviceId),
+		index('device_variants_variant_idx').on(table.variantId),
+		index('device_variants_option_idx').on(table.variantOptionId)
+	]
+);
 
 export const propertiesTable = pgTable('properties', {
 	id: varchar('id', { length: 255 }).primaryKey(),
@@ -138,7 +146,8 @@ export const deviceListingsTable = pgTable(
 	},
 	(table) => [
 		unique('unique_listing').on(table.deviceId, table.sellerId),
-		index('device_seller_idx').on(table.deviceId, table.sellerId)
+		index('device_seller_idx').on(table.deviceId, table.sellerId),
+		index('device_listings_device_idx').on(table.deviceId)
 	]
 );
 
@@ -152,13 +161,14 @@ export const priceHistoryTable = pgTable(
 		price: real('price').notNull(),
 		inStock: boolean('in_stock').notNull().default(true),
 		validFrom: timestamp('valid_from').notNull().defaultNow(),
-		validTo: timestamp('valid_to'), // NULL means currently active
+		validTo: timestamp('valid_to'),
 		createdAt: timestamp('created_at').notNull().defaultNow(),
 		updatedAt: timestamp('updated_at').notNull().defaultNow()
 	},
 	(table) => [
 		index('listing_idx').on(table.listingId),
 		index('valid_from_idx').on(table.validFrom),
-		index('valid_to_idx').on(table.validTo)
+		index('valid_to_idx').on(table.validTo),
+		index('price_history_listing_valid_idx').on(table.listingId, table.validTo)
 	]
 );
