@@ -150,12 +150,6 @@ function getDeviceTypesForProperty(
 	switch (propertyId) {
 		case 'requires-neutral':
 			return ['switch'];
-		case 'color':
-			return ['light'];
-		case 'power':
-			return ['plug'];
-		case 'state':
-			return ['switch', 'plug'];
 		default:
 			return [];
 	}

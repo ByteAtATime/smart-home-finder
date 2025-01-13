@@ -10,5 +10,6 @@ export const PROTOCOL_DISPLAY_NAMES: Record<(typeof protocolEnum.enumValues)[num
 export const DEVICE_TYPES: Record<(typeof deviceTypeEnum.enumValues)[number], string> = {
 	light: 'Light',
 	switch: 'Switch',
+	sensor: 'Sensor',
 	plug: 'Plug'
 };

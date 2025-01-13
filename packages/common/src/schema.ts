@@ -27,7 +27,7 @@ export const usersTable = pgTable('users', {
 });
 
 export const propertyTypeEnum = pgEnum('property_type', ['int', 'float', 'string', 'boolean']);
-export const deviceTypeEnum = pgEnum('device_type', ['light', 'switch', 'plug']);
+export const deviceTypeEnum = pgEnum('device_type', ['light', 'switch', 'sensor', 'plug']);
 export const protocolEnum = pgEnum('protocol', ['zwave', 'zigbee', 'bluetooth', 'wifi']);
 
 export const devicesTable = pgTable('devices', {
