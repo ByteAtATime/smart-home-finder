@@ -142,8 +142,8 @@ export class PostgresVariantRepository implements IVariantRepository {
 		);
 		if (uncachedVariantIds.length === 0) return;
 
-		const query = db
-			.select({
+		const options = await db
+			.selectDistinctOn([variantOptionsTable.id], {
 				id: variantOptionsTable.id,
 				value: variantOptionsTable.value,
 				deviceId: deviceVariantsTable.deviceId,
@@ -156,15 +156,15 @@ export class PostgresVariantRepository implements IVariantRepository {
 				deviceVariantsTable,
 				eq(deviceVariantsTable.variantOptionId, variantOptionsTable.id)
 			)
-			.where(inArray(variantOptionsTable.variantId, uncachedVariantIds));
-
-		if (prioritizedDeviceId) {
-			query.orderBy(
-				sql`CASE WHEN ${deviceVariantsTable.deviceId} = ${prioritizedDeviceId} THEN 0 ELSE 1 END`
+			.where(inArray(variantOptionsTable.variantId, uncachedVariantIds))
+			.orderBy(
+				variantOptionsTable.id,
+				...(prioritizedDeviceId
+					? [
+							sql`CASE WHEN ${deviceVariantsTable.deviceId} = ${prioritizedDeviceId} THEN 0 ELSE 1 END`
+						]
+					: [])
 			);
-		}
-
-		const options = await query.execute();
 
 		const optionsByVariant = new Map<number, VariantOption[]>();
 		for (const option of options) {

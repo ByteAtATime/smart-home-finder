@@ -31,15 +31,9 @@ export class Variant {
 	}
 
 	public async getOptions(prioritizedDeviceId?: number): Promise<VariantOption[]> {
-		const options = await this.repository.getCachedVariantOptions(this.id);
-		if (!prioritizedDeviceId) return options;
+		const options = await this.repository.getCachedVariantOptions(this.id, prioritizedDeviceId);
 
-		// Sort options locally to prioritize the device
-		return [...options].sort((a, b) => {
-			if (a.deviceId === prioritizedDeviceId) return -1;
-			if (b.deviceId === prioritizedDeviceId) return 1;
-			return 0;
-		});
+		return options;
 	}
 
 	public async toJson(prioritizedDeviceId?: number): Promise<VariantJson> {
