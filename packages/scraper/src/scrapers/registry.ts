@@ -4,11 +4,13 @@ import { inovelliScraper } from './inovelli';
 import { amazonScraper } from './amazon';
 import type { Scraper } from './types';
 import { eq } from 'drizzle-orm';
+import { thirdRealityScraper } from './thirdreality';
 
 export class ScraperRegistry {
 	private scrapers: Map<string, Scraper> = new Map([
 		['inovelli', inovelliScraper],
-		['amazon', amazonScraper]
+		['amazon', amazonScraper],
+		['thirdreality', thirdRealityScraper]
 	]);
 
 	/**
