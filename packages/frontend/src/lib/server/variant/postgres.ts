@@ -6,7 +6,7 @@ import {
 } from '@smart-home-finder/common/schema';
 import type { IVariantRepository, VariantOption } from './types';
 import { selectVariantSchema } from '@smart-home-finder/common/types';
-import { eq, inArray, sql } from 'drizzle-orm';
+import { eq, getTableColumns, inArray, sql } from 'drizzle-orm';
 import { Variant } from './variant';
 
 export class PostgresVariantRepository implements IVariantRepository {
@@ -44,7 +44,10 @@ export class PostgresVariantRepository implements IVariantRepository {
 
 	private async fetchVariantsForDevice(deviceId: number): Promise<Variant[]> {
 		const variants = await db
-			.select()
+			.select({
+				...getTableColumns(variantsTable),
+				deviceId: deviceVariantsTable.deviceId
+			})
 			.from(variantsTable)
 			.innerJoin(deviceVariantsTable, eq(deviceVariantsTable.variantId, variantsTable.id))
 			.where(eq(deviceVariantsTable.deviceId, deviceId))

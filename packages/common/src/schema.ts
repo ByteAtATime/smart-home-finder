@@ -147,7 +147,8 @@ export const deviceListingsTable = pgTable(
 	(table) => [
 		unique('unique_listing').on(table.deviceId, table.sellerId),
 		index('device_seller_idx').on(table.deviceId, table.sellerId),
-		index('device_listings_device_idx').on(table.deviceId)
+		index('device_listings_device_idx').on(table.deviceId),
+		index('device_listings_active_idx').on(table.deviceId, table.isActive)
 	]
 );
 
@@ -169,6 +170,9 @@ export const priceHistoryTable = pgTable(
 		index('listing_idx').on(table.listingId),
 		index('valid_from_idx').on(table.validFrom),
 		index('valid_to_idx').on(table.validTo),
-		index('price_history_listing_valid_idx').on(table.listingId, table.validTo)
+		index('price_history_listing_valid_idx').on(table.listingId, table.validTo),
+		index('price_history_current_idx')
+			.on(table.listingId)
+			.where(sql`valid_to IS NULL`)
 	]
 );

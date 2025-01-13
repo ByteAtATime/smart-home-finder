@@ -79,21 +79,25 @@ export class DeviceService {
 		const devices = paginatedDevices.items.map((device) => new Device(device, this));
 		const deviceIds = devices.map((device) => device.id);
 
-		await Promise.all([
+		const [variants] = await Promise.all([
+			Promise.all(
+				devices.map((device) => this.variantRepository.getCachedDeviceVariants(device.id))
+			),
 			this.propertyRepository.preloadDeviceProperties(deviceIds),
 			this.variantRepository.preloadDeviceVariants(deviceIds),
 			this.listingRepository.preloadDeviceListings(deviceIds)
 		]);
 
-		const variants = await Promise.all(
-			devices.map((device) => this.variantRepository.getCachedDeviceVariants(device.id))
-		);
 		const variantIds = [...new Set(variants.flat().map((variant) => variant.id))];
-		await this.variantRepository.preloadVariantOptions(variantIds);
+		if (variantIds.length > 0) {
+			await this.variantRepository.preloadVariantOptions(variantIds);
+		}
+
+		const items = await Promise.all(devices.map((device) => device.toJson()));
 
 		return {
 			...paginatedDevices,
-			items: await Promise.all(devices.map((device) => device.toJson()))
+			items
 		};
 	}
 }
