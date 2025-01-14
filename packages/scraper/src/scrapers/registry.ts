@@ -5,12 +5,14 @@ import { amazonScraper } from './amazon';
 import type { Scraper } from './types';
 import { eq } from 'drizzle-orm';
 import { thirdRealityScraper } from './thirdreality';
+import { philipsHueScraper } from './philips-hue';
 
 export class ScraperRegistry {
 	private scrapers: Map<string, Scraper> = new Map([
 		['inovelli', inovelliScraper],
 		['amazon', amazonScraper],
-		['thirdreality', thirdRealityScraper]
+		['thirdreality', thirdRealityScraper],
+		['philips-hue', philipsHueScraper]
 	]);
 
 	/**
