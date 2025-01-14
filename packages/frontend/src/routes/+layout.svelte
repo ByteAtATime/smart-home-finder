@@ -5,8 +5,16 @@
 	import { ModeWatcher } from 'mode-watcher';
 	import ThemeToggle from '$lib/components/ThemeToggle.svelte';
 	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { browser } from '$app/environment';
+	import posthog from 'posthog-js';
 
 	let { children } = $props();
+
+	if (browser) {
+		beforeNavigate(() => posthog.capture('$pageleave'));
+		afterNavigate(() => posthog.capture('$pageview'));
+	}
 </script>
 
 <ClerkProvider publishableKey={PUBLIC_CLERK_PUBLISHABLE_KEY}>
