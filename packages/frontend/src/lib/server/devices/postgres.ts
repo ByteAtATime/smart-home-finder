@@ -1,4 +1,17 @@
-import { count, eq, and, sql, inArray, between, isNull, ilike, or, ne, SQL } from 'drizzle-orm';
+import {
+	count,
+	eq,
+	and,
+	sql,
+	inArray,
+	between,
+	isNull,
+	ilike,
+	or,
+	ne,
+	SQL,
+	min
+} from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	type DeviceData,
@@ -56,11 +69,11 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 				protocol: devicesTable.protocol,
 				images: devicesTable.images,
 				deviceType: devicesTable.deviceType,
-				price: priceHistoryTable.price,
-				priceHistory: priceHistoryTable.price,
+				price: min(priceHistoryTable.price),
 				total: count().append(sql`OVER()`)
 			})
 			.from(devicesTable)
+			.groupBy(devicesTable.id)
 			.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
 			.leftJoin(priceHistoryTable, eq(deviceListingsTable.id, priceHistoryTable.listingId))
 			.offset(offset)
