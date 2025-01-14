@@ -2,7 +2,7 @@
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Label } from '$lib/components/ui/label';
 
-	let { value = $bindable(''), error = '', label = 'JSON Editor' } = $props();
+	let { value = $bindable({}), error = '', label = 'JSON Editor' } = $props();
 	let rawValue = $state(JSON.stringify(value, null, 2));
 	let localError = $state('');
 

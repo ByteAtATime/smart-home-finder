@@ -10,11 +10,6 @@
 	import { goto } from '$app/navigation';
 	import { JsonEditor } from '$lib/components/ui/json-editor';
 
-	interface Device {
-		id: number;
-		name: string;
-	}
-
 	interface Seller {
 		id: number;
 		name: string;
@@ -35,7 +30,7 @@
 	let deviceTriggerRef = $state<HTMLButtonElement>(null!);
 	let sellerTriggerRef = $state<HTMLButtonElement>(null!);
 
-	let selectedDevice = $derived(data.devices.find((d: Device) => d.id === $form.deviceId));
+	let selectedDevice = $derived(data.devices.find((d) => d.id === $form.deviceId));
 	let selectedSeller = $derived(data.sellers.find((s: Seller) => s.id === $form.sellerId));
 
 	function closeDevicePopover() {
@@ -101,6 +96,7 @@
 													)}
 												/>
 												{device.name}
+												<span class="text-muted-foreground">({device.listingCount})</span>
 											</Command.Item>
 										{/each}
 									</Command.Group>
@@ -233,7 +229,9 @@
 				<div class="space-y-2">
 					<JsonEditor
 						bind:value={$form.metadata}
-						error={$errors.metadata}
+						error={Object.entries($errors.metadata ?? {})
+							.map(([key, error]) => `${key}: ${error}`)
+							.join(', ')}
 						label="Metadata (for scrapers)"
 					/>
 				</div>
