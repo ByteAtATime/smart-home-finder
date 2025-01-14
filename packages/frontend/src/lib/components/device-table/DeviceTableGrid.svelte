@@ -67,7 +67,7 @@
 				if (lowestPrice === Infinity) {
 					return '-';
 				}
-				return `$${lowestPrice}`;
+				return `$${lowestPrice.toFixed(2)}`;
 			}
 		}
 	];
