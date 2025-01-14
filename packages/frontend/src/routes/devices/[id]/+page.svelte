@@ -6,6 +6,7 @@
 	import { ExternalLinkIcon } from 'lucide-svelte';
 	import { navigating } from '$app/state';
 	import { DEVICE_TYPES, PROTOCOL_DISPLAY_NAMES } from '@smart-home-finder/common/constants';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 
 	const { data } = $props();
 	const { device } = $derived(data);
@@ -138,6 +139,9 @@
 				<time datetime={device.updatedAt?.toISOString()}>
 					Last Updated: {device.updatedAt?.toLocaleDateString()}
 				</time>
+				<div class="relative top-4">
+					<FeedbackButton />
+				</div>
 			</footer>
 		</Card.Content>
 	</Card.Root>

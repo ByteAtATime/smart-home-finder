@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 
 	interface NavItem {
 		href: string;
@@ -57,7 +58,8 @@
 					{/each}
 				</nav>
 			</div>
-			<div class="ml-auto">
+			<div class="ml-auto flex items-center gap-4">
+				<FeedbackButton />
 				<Button variant="outline" href="/">Exit Admin</Button>
 			</div>
 		</div>
