@@ -40,8 +40,13 @@
 		searchQuery: string;
 	}) {
 		const searchParams = new URLSearchParams();
-		searchParams.set('page', page.toString());
-		searchParams.set('pageSize', pageSize.toString());
+
+		if (page !== 1) {
+			searchParams.set('page', page.toString());
+		}
+		if (pageSize !== 10) {
+			searchParams.set('pageSize', pageSize.toString());
+		}
 
 		if (filters.protocols.length > 0) {
 			searchParams.set('protocol', filters.protocols.join(','));
@@ -94,7 +99,9 @@
 			);
 		}
 
-		goto(`?${searchParams.toString()}`, { keepFocus: true });
+		if (searchParams.toString()) {
+			goto(`?${searchParams.toString()}`, { keepFocus: true });
+		}
 	}
 
 	function handlePageChange(newPage: number) {
