@@ -11,7 +11,7 @@ import {
 import { error, fail } from '@sveltejs/kit';
 import { zod } from 'sveltekit-superforms/adapters';
 import { setError } from 'sveltekit-superforms/server';
-import { sql, eq, asc } from 'drizzle-orm';
+import { sql, eq, asc, desc, count } from 'drizzle-orm';
 
 export const load: PageServerLoad = async () => {
 	const form = await superValidate(zod(formSchema));
@@ -26,7 +26,7 @@ export const load: PageServerLoad = async () => {
 		.from(devicesTable)
 		.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
 		.groupBy(devicesTable.id)
-		.orderBy(asc(sql`COUNT(${deviceListingsTable.deviceId})`));
+		.orderBy(asc(count(deviceListingsTable.deviceId)), desc(devicesTable.createdAt));
 
 	const sellers = await db
 		.select({
