@@ -40,10 +40,12 @@
 		searchQuery: string;
 	}) {
 		const searchParams = new URLSearchParams();
+		const currentSearchParams = new URLSearchParams(location.search);
 
-		if (page !== 1) {
+		if (page > 1 || currentSearchParams.has('page')) {
 			searchParams.set('page', page.toString());
 		}
+
 		if (pageSize !== 10) {
 			searchParams.set('pageSize', pageSize.toString());
 		}
