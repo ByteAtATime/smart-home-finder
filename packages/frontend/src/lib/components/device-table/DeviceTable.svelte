@@ -54,7 +54,7 @@
 		if (filters.deviceTypes.length > 0) {
 			searchParams.set('deviceType', filters.deviceTypes.join(','));
 		}
-		if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== databasePriceRange[1]) {
+		if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== Math.ceil(databasePriceRange[1])) {
 			searchParams.set('minPrice', filters.priceRange[0].toString());
 			searchParams.set('maxPrice', filters.priceRange[1].toString());
 		}
@@ -114,7 +114,7 @@
 		<DeviceTableFilters
 			{propertiesByDeviceType}
 			{availableDeviceTypes}
-			maxPrice={databasePriceRange[1]}
+			maxPrice={Math.ceil(databasePriceRange[1])}
 			onFiltersChange={handleFiltersChange}
 		/>
 
