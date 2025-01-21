@@ -7,6 +7,7 @@ import type { PropertyJson } from '$lib/server/properties/property';
 import { deviceTypeEnum, protocolEnum } from '@smart-home-finder/common/schema';
 import { json } from '@sveltejs/kit';
 import { z } from 'zod';
+import { sortFieldEnum, sortDirectionEnum } from '$lib/server/devices/types';
 
 export const querySchema = z.object({
 	page: z.coerce.number().min(1).optional().default(1),
@@ -24,6 +25,8 @@ export const querySchema = z.object({
 	minPrice: z.coerce.number().optional(),
 	maxPrice: z.coerce.number().optional(),
 	search: z.string().optional(),
+	sortField: z.enum(sortFieldEnum).optional(),
+	sortDirection: z.enum(sortDirectionEnum).optional().default('asc'),
 	propertyFilters: z
 		.string()
 		.optional()
@@ -64,8 +67,19 @@ export const endpoint_GET: EndpointHandler<{
 	listingRepository: IListingRepository;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, listingRepository, query }) => {
-	const { page, pageSize, deviceType, protocol, minPrice, maxPrice, search, propertyFilters } =
-		query;
+	console.time('total');
+	const {
+		page,
+		pageSize,
+		deviceType,
+		protocol,
+		minPrice,
+		maxPrice,
+		search,
+		propertyFilters,
+		sortField,
+		sortDirection
+	} = query;
 
 	const filters = {
 		...(deviceType && { deviceType }),
@@ -73,6 +87,8 @@ export const endpoint_GET: EndpointHandler<{
 		...(minPrice !== undefined && { minPrice }),
 		...(maxPrice !== undefined && { maxPrice }),
 		...(search && { search }),
+		...(sortField && { sortField }),
+		...(sortDirection && { sortDirection }),
 		...(propertyFilters && {
 			propertyFilters: propertyFilters.map((filter) => ({
 				propertyId: filter.propertyId,
@@ -85,13 +101,16 @@ export const endpoint_GET: EndpointHandler<{
 
 	const priceBounds = minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined;
 
+	console.time('getFilteredDeviceTypes');
 	const filteredDeviceTypes = await deviceService.getFilteredDeviceTypes({
 		deviceType: filters.deviceType ?? undefined,
 		protocol: filters.protocol ?? undefined,
 		priceBounds,
 		search: filters.search
 	});
+	console.timeEnd('getFilteredDeviceTypes');
 
+	console.time('getAllDevicesWithVariantsAndProperties');
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
 		pageSize,
@@ -100,13 +119,21 @@ export const endpoint_GET: EndpointHandler<{
 			protocol: filters.protocol ?? undefined,
 			priceBounds,
 			propertyFilters: filters.propertyFilters ?? undefined,
-			search: filters.search
+			search: filters.search,
+			sortField: filters.sortField ?? undefined,
+			sortDirection: filters.sortDirection ?? undefined
 		}
 	);
+	console.timeEnd('getAllDevicesWithVariantsAndProperties');
 
+	console.time('getPriceBounds');
 	const databasePriceRange = await listingRepository.getPriceBounds();
+	console.timeEnd('getPriceBounds');
 
+	console.time('getAllProperties');
 	const allProperties = await deviceService.getAllProperties();
+	console.timeEnd('getAllProperties');
+	console.time('propertiesByDeviceType');
 	const propertiesByDeviceTypePromise = allProperties.reduce(
 		(acc, property) => {
 			const deviceTypes = getDeviceTypesForProperty(property.id);
@@ -130,7 +157,9 @@ export const endpoint_GET: EndpointHandler<{
 			])
 		)
 	);
+	console.timeEnd('propertiesByDeviceType');
 
+	console.timeEnd('total');
 	return json({
 		success: true,
 		total: paginatedDevices.total,

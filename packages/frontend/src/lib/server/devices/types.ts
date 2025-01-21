@@ -7,11 +7,19 @@ import type {
 } from '@smart-home-finder/common/types';
 import { z } from 'zod';
 
+export const sortFieldEnum = ['price', 'name', 'createdAt'] as const;
+export const sortDirectionEnum = ['asc', 'desc'] as const;
+
+export type SortField = (typeof sortFieldEnum)[number];
+export type SortDirection = (typeof sortDirectionEnum)[number];
+
 export const deviceFiltersSchema = z.object({
 	deviceType: z.array(z.enum(deviceTypeEnum.enumValues)).optional(),
 	protocol: z.array(z.enum(protocolEnum.enumValues)).optional(),
 	priceBounds: z.array(z.number()).optional(),
 	search: z.string().optional(),
+	sortField: z.enum(sortFieldEnum).optional(),
+	sortDirection: z.enum(sortDirectionEnum).optional(),
 	propertyFilters: z
 		.array(
 			z.object({

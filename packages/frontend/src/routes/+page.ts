@@ -38,7 +38,20 @@ export const load: PageLoad = async ({ fetch, url }) => {
 		searchParams.set('search', search);
 	}
 
+	const sortField = url.searchParams.get('sortField');
+	if (sortField) {
+		searchParams.set('sortField', sortField);
+	}
+
+	const sortDirection = url.searchParams.get('sortDirection');
+	if (sortDirection) {
+		searchParams.set('sortDirection', sortDirection);
+	}
+
+	console.time('fetch');
 	const response = await fetch(`/api/devices?${searchParams.toString()}`);
+	console.timeEnd('fetch');
+
 	const data = (await response.json()) as {
 		success: boolean;
 		total: number;

@@ -6,6 +6,7 @@
 	import DeviceTableFilters from './DeviceTableFilters.svelte';
 	import DeviceTableGrid from './DeviceTableGrid.svelte';
 	import LoadingOverlay from './LoadingOverlay.svelte';
+	import DeviceTableSort from './DeviceTableSort.svelte';
 
 	type DeviceTableProps = {
 		devices: DeviceJson[];
@@ -109,6 +110,13 @@
 	function handlePageChange(newPage: number) {
 		page = newPage;
 	}
+
+	function handleSortChange(field: string, direction: string) {
+		const searchParams = new URLSearchParams(location.search);
+		searchParams.set('sortField', field);
+		searchParams.set('sortDirection', direction);
+		goto(`?${searchParams.toString()}`, { keepFocus: true });
+	}
 </script>
 
 <div class="relative">
@@ -120,7 +128,12 @@
 			onFiltersChange={handleFiltersChange}
 		/>
 
-		<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
+		<div class="w-full flex-1">
+			<div class="mb-4 flex justify-end">
+				<DeviceTableSort onSortChange={handleSortChange} />
+			</div>
+			<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
+		</div>
 	</div>
 
 	<LoadingOverlay />

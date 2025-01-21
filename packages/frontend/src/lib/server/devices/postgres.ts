@@ -48,6 +48,27 @@ function buildCommonWhere(filters: DeviceFilters) {
 	return conditions;
 }
 
+type SortConfig = {
+	field: 'price' | 'name' | 'createdAt';
+	direction: 'asc' | 'desc';
+};
+
+function buildOrderBy(sort?: SortConfig): SQL {
+	if (!sort) {
+		return sql`${devicesTable.name} ASC`;
+	}
+
+	const direction = sort.direction === 'desc' ? sql`DESC` : sql`ASC`;
+	switch (sort.field) {
+		case 'price':
+			return sql`MIN(${priceHistoryTable.price}) ${direction}`;
+		case 'name':
+			return sql`${devicesTable.name} ${direction}`;
+		case 'createdAt':
+			return sql`${devicesTable.createdAt} ${direction}`;
+	}
+}
+
 export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevices(): Promise<DeviceData[]> {
 		return db.query.devicesTable.findMany();
@@ -118,6 +139,12 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		if (whereConditions.length) {
 			query.where(and(...whereConditions));
 		}
+
+		// Add sorting
+		const sortConfig = filters.sortField
+			? { field: filters.sortField, direction: filters.sortDirection ?? 'asc' }
+			: undefined;
+		query.orderBy(buildOrderBy(sortConfig));
 
 		const devices = await query;
 		return {
