@@ -176,3 +176,32 @@ export const priceHistoryTable = pgTable(
 			.where(sql`valid_to IS NULL`)
 	]
 );
+
+export const currentDevicePricesView = sql`
+CREATE MATERIALIZED VIEW IF NOT EXISTS current_device_prices AS
+SELECT 
+    d.id as device_id,
+    d.name as device_name,
+    d.images,
+    d.device_type,
+    d.protocol,
+    d.created_at as device_created_at,
+    d.updated_at as device_updated_at,
+    dl.id as listing_id,
+    dl.seller_id,
+    s.name as seller_name,
+    dl.url,
+    dl.is_active,
+    ph.price,
+    ph.in_stock
+FROM devices d
+LEFT JOIN device_listings dl ON d.id = dl.device_id AND dl.is_active = true
+LEFT JOIN sellers s ON dl.seller_id = s.id
+LEFT JOIN price_history ph ON dl.id = ph.listing_id AND ph.valid_to IS NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS current_device_prices_device_id_idx ON current_device_prices (device_id);
+CREATE INDEX IF NOT EXISTS current_device_prices_price_idx ON current_device_prices (price);
+CREATE INDEX IF NOT EXISTS current_device_prices_device_type_idx ON current_device_prices (device_type);
+
+REFRESH MATERIALIZED VIEW current_device_prices;
+`;

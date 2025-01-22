@@ -67,7 +67,6 @@ export const endpoint_GET: EndpointHandler<{
 	listingRepository: IListingRepository;
 	query: z.infer<typeof querySchema>;
 }> = async ({ deviceService, listingRepository, query }) => {
-	console.time('total');
 	const {
 		page,
 		pageSize,
@@ -101,16 +100,13 @@ export const endpoint_GET: EndpointHandler<{
 
 	const priceBounds = minPrice != null && maxPrice != null ? [minPrice, maxPrice] : undefined;
 
-	console.time('getFilteredDeviceTypes');
 	const filteredDeviceTypes = await deviceService.getFilteredDeviceTypes({
 		deviceType: filters.deviceType ?? undefined,
 		protocol: filters.protocol ?? undefined,
 		priceBounds,
 		search: filters.search
 	});
-	console.timeEnd('getFilteredDeviceTypes');
 
-	console.time('getAllDevicesWithVariantsAndProperties');
 	const paginatedDevices = await deviceService.getAllDevicesWithVariantsAndProperties(
 		page,
 		pageSize,
@@ -124,16 +120,10 @@ export const endpoint_GET: EndpointHandler<{
 			sortDirection: filters.sortDirection ?? undefined
 		}
 	);
-	console.timeEnd('getAllDevicesWithVariantsAndProperties');
 
-	console.time('getPriceBounds');
 	const databasePriceRange = await listingRepository.getPriceBounds();
-	console.timeEnd('getPriceBounds');
 
-	console.time('getAllProperties');
 	const allProperties = await deviceService.getAllProperties();
-	console.timeEnd('getAllProperties');
-	console.time('propertiesByDeviceType');
 	const propertiesByDeviceTypePromise = allProperties.reduce(
 		(acc, property) => {
 			const deviceTypes = getDeviceTypesForProperty(property.id);
@@ -157,9 +147,7 @@ export const endpoint_GET: EndpointHandler<{
 			])
 		)
 	);
-	console.timeEnd('propertiesByDeviceType');
 
-	console.timeEnd('total');
 	return json({
 		success: true,
 		total: paginatedDevices.total,

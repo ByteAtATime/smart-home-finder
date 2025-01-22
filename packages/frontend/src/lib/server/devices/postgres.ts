@@ -1,3 +1,4 @@
+import { db } from '../db';
 import {
 	count,
 	eq,
@@ -9,13 +10,12 @@ import {
 	ilike,
 	or,
 	ne,
-	SQL,
-	min
+	exists,
+	type SQL
 } from 'drizzle-orm';
 import {
 	selectDeviceSchema,
 	type DeviceData,
-	type DeviceProtocol,
 	type DeviceType,
 	type Paginated,
 	type UpdateDevice
@@ -23,51 +23,10 @@ import {
 import {
 	deviceListingsTable,
 	devicesTable,
-	priceHistoryTable,
-	devicePropertiesTable
+	devicePropertiesTable,
+	priceHistoryTable
 } from '@smart-home-finder/common/schema';
-import { db } from '$lib/server/db';
 import type { DeviceFilters, IDeviceRepository } from './types';
-
-function buildCommonWhere(filters: DeviceFilters) {
-	const conditions: (SQL | undefined)[] = [isNull(priceHistoryTable.validTo)];
-
-	if (filters.deviceType) {
-		conditions.push(inArray(devicesTable.deviceType, filters.deviceType as DeviceType[]));
-	}
-	if (filters.protocol) {
-		conditions.push(inArray(devicesTable.protocol, filters.protocol as DeviceProtocol[]));
-	}
-	if (filters.priceBounds) {
-		conditions.push(
-			between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1]),
-			isNull(priceHistoryTable.validTo)
-		);
-	}
-
-	return conditions;
-}
-
-type SortConfig = {
-	field: 'price' | 'name' | 'createdAt';
-	direction: 'asc' | 'desc';
-};
-
-function buildOrderBy(sort?: SortConfig): SQL {
-	if (!sort) {
-		return sql`${devicesTable.name} ASC`;
-	}
-
-	const direction = sort.direction === 'desc' ? sql`DESC` : sql`ASC`;
-	switch (sort.field) {
-		case 'price':
-			return sql`MIN(${priceHistoryTable.price}) ${direction}`;
-		case 'name':
-			return sql`${devicesTable.name} ${direction}`;
-		case 'createdAt':
-			return sql`${devicesTable.createdAt} ${direction}`;
-	}
-}
 
 export class PostgresDeviceRepository implements IDeviceRepository {
 	async getAllDevices(): Promise<DeviceData[]> {
@@ -81,27 +40,51 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 	): Promise<Paginated<DeviceData>> {
 		const offset = (page - 1) * pageSize;
 
+		// Optimize the main query to get devices with current prices in a single query
 		const query = db
 			.select({
 				id: devicesTable.id,
 				name: devicesTable.name,
-				createdAt: devicesTable.createdAt,
-				updatedAt: devicesTable.updatedAt,
+				deviceType: devicesTable.deviceType,
 				protocol: devicesTable.protocol,
 				images: devicesTable.images,
-				deviceType: devicesTable.deviceType,
-				price: min(priceHistoryTable.price),
+				createdAt: devicesTable.createdAt,
+				updatedAt: devicesTable.updatedAt,
+				price: sql<number>`MIN(${priceHistoryTable.price})`,
 				total: count().append(sql`OVER()`)
 			})
 			.from(devicesTable)
+			.leftJoin(
+				deviceListingsTable,
+				and(
+					eq(devicesTable.id, deviceListingsTable.deviceId),
+					eq(deviceListingsTable.isActive, true)
+				)
+			)
+			.leftJoin(
+				priceHistoryTable,
+				and(
+					eq(deviceListingsTable.id, priceHistoryTable.listingId),
+					isNull(priceHistoryTable.validTo)
+				)
+			)
 			.groupBy(devicesTable.id)
-			.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
-			.leftJoin(priceHistoryTable, eq(deviceListingsTable.id, priceHistoryTable.listingId))
 			.offset(offset)
 			.limit(pageSize);
 
-		const whereConditions = buildCommonWhere(filters);
+		const whereConditions: (SQL | undefined)[] = [];
 
+		if (filters.deviceType) {
+			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType));
+		}
+		if (filters.protocol) {
+			whereConditions.push(inArray(devicesTable.protocol, filters.protocol));
+		}
+		if (filters.priceBounds) {
+			whereConditions.push(
+				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1])
+			);
+		}
 		if (filters.search) {
 			whereConditions.push(ilike(devicesTable.name, `%${filters.search}%`));
 		}
@@ -114,7 +97,7 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 					.where(
 						and(
 							eq(devicePropertiesTable.propertyId, propertyFilter.propertyId),
-							eq(devicesTable.deviceType, propertyFilter.deviceType),
+							eq(devicePropertiesTable.deviceId, devicesTable.id),
 							propertyFilter.bounds
 								? between(
 										devicePropertiesTable.floatValue,
@@ -123,20 +106,17 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 									)
 								: propertyFilter.booleanValue !== undefined
 									? eq(devicePropertiesTable.booleanValue, propertyFilter.booleanValue)
-									: undefined
+									: sql`1=1`
 						)
 					);
 
 				whereConditions.push(
-					or(
-						ne(devicesTable.deviceType, propertyFilter.deviceType),
-						inArray(devicesTable.id, subquery)
-					)
+					or(ne(devicesTable.deviceType, propertyFilter.deviceType), exists(subquery))
 				);
 			}
 		}
 
-		if (whereConditions.length) {
+		if (whereConditions.length > 0) {
 			query.where(and(...whereConditions));
 		}
 
@@ -144,9 +124,26 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		const sortConfig = filters.sortField
 			? { field: filters.sortField, direction: filters.sortDirection ?? 'asc' }
 			: undefined;
-		query.orderBy(buildOrderBy(sortConfig));
+
+		if (sortConfig) {
+			const direction = sortConfig.direction === 'desc' ? sql`DESC` : sql`ASC`;
+			switch (sortConfig.field) {
+				case 'price':
+					query.orderBy(sql`MIN(${priceHistoryTable.price}) ${direction}`);
+					break;
+				case 'name':
+					query.orderBy(sql`${devicesTable.name} ${direction}`);
+					break;
+				case 'createdAt':
+					query.orderBy(sql`${devicesTable.createdAt} ${direction}`);
+					break;
+			}
+		} else {
+			query.orderBy(sql`${devicesTable.name} ASC`);
+		}
 
 		const devices = await query;
+
 		return {
 			items: devices.map(({ total: _, ...rest }) => rest),
 			total: devices[0]?.total ?? 0,
@@ -201,11 +198,36 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 		const query = db
 			.selectDistinct({ deviceType: devicesTable.deviceType })
 			.from(devicesTable)
-			.leftJoin(deviceListingsTable, eq(devicesTable.id, deviceListingsTable.deviceId))
-			.leftJoin(priceHistoryTable, eq(deviceListingsTable.id, priceHistoryTable.listingId));
+			.leftJoin(
+				deviceListingsTable,
+				and(
+					eq(devicesTable.id, deviceListingsTable.deviceId),
+					eq(deviceListingsTable.isActive, true)
+				)
+			)
+			.leftJoin(
+				priceHistoryTable,
+				and(
+					eq(deviceListingsTable.id, priceHistoryTable.listingId),
+					isNull(priceHistoryTable.validTo)
+				)
+			);
 
-		const whereConditions = buildCommonWhere(filters);
-		if (whereConditions.length) {
+		const whereConditions: SQL[] = [];
+
+		if (filters.deviceType) {
+			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType));
+		}
+		if (filters.protocol) {
+			whereConditions.push(inArray(devicesTable.protocol, filters.protocol));
+		}
+		if (filters.priceBounds) {
+			whereConditions.push(
+				between(priceHistoryTable.price, filters.priceBounds[0], filters.priceBounds[1])
+			);
+		}
+
+		if (whereConditions.length > 0) {
 			query.where(and(...whereConditions));
 		}
 

@@ -54,6 +54,7 @@ export class Device {
 	}
 
 	private _variants: Variant[] | null = null;
+	private _variantsJson: Promise<z.infer<typeof variantJsonSchema>[]> | null = null;
 
 	public async getVariants(): Promise<Variant[]> {
 		if (this._variants) {
@@ -65,6 +66,7 @@ export class Device {
 	}
 
 	private _properties: Property[] | null = null;
+	private _propertiesJson: Promise<Record<string, PropertyJson>> | null = null;
 
 	public async getProperties(): Promise<Property[]> {
 		if (this._properties === null) {
@@ -85,32 +87,62 @@ export class Device {
 		return this._listings;
 	}
 
+	private async getPropertiesJson(): Promise<Record<string, PropertyJson>> {
+		if (this._propertiesJson === null) {
+			const properties = await this.getProperties();
+			this._propertiesJson = Promise.all(properties.map((p) => p.toJson(this.data.id))).then(
+				(jsonProperties) =>
+					jsonProperties.reduce(
+						(acc, property) => {
+							acc[property.id] = property;
+							return acc;
+						},
+						{} as Record<string, PropertyJson>
+					)
+			);
+		}
+		return this._propertiesJson;
+	}
+
+	private async getVariantsJson(): Promise<z.infer<typeof variantJsonSchema>[]> {
+		if (this._variantsJson === null) {
+			const variants = await this.getVariants();
+			this._variantsJson = Promise.all(variants.map((v) => v.toJson(this.id)));
+		}
+		return this._variantsJson;
+	}
+
 	public async toJson(): Promise<DeviceJson> {
-		const properties = await this.getProperties();
+		// Start all async operations immediately
+		const propertiesPromise = this.getProperties().then(async (properties) => {
+			const jsonProperties = await Promise.all(properties.map((p) => p.toJson(this.data.id)));
+			return jsonProperties.reduce(
+				(acc, property) => {
+					acc[property.id] = property;
+					return acc;
+				},
+				{} as Record<string, PropertyJson>
+			);
+		});
 
-		const jsonProperties = await Promise.all(
-			properties.map(async (property) => {
-				return property.toJson(this.data.id);
-			})
+		const variantsPromise = this.getVariants().then(async (variants) =>
+			Promise.all(variants.map((v) => v.toJson(this.id)))
 		);
 
-		const propertiesById = jsonProperties.reduce(
-			(acc, property) => {
-				acc[property.id] = property;
-				return acc;
-			},
-			{} as Record<string, PropertyJson>
-		);
+		const listingsPromise = this.getListings();
 
-		const variants = await this.getVariants();
-
-		const variantsJson = await Promise.all(variants.map((variant) => variant.toJson(this.id)));
+		// Wait for all transformations to complete
+		const [properties, variants, listings] = await Promise.all([
+			propertiesPromise,
+			variantsPromise,
+			listingsPromise
+		]);
 
 		return {
 			...this.data,
-			variants: variantsJson,
-			properties: propertiesById,
-			listings: await this.getListings()
+			variants,
+			properties,
+			listings
 		};
 	}
 }

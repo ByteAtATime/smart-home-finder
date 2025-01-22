@@ -70,30 +70,54 @@ export class DeviceService {
 		pageSize: number,
 		filters: DeviceFilters = {}
 	): Promise<Paginated<DeviceJson>> {
-		const paginatedDevices = await this.deviceRepository.getAllDevicesPaginated(
-			page,
-			pageSize,
-			filters
-		);
+		// Start ALL database queries immediately in parallel
+		const [paginatedDevices, _filteredTypes, _allProperties, _priceBounds] = await Promise.all([
+			this.deviceRepository.getAllDevicesPaginated(page, pageSize, filters),
+			this.deviceRepository.getFilteredDeviceTypes(filters),
+			this.propertyRepository.getAllProperties(),
+			this.listingRepository.getPriceBounds()
+		]);
 
 		const devices = paginatedDevices.items.map((device) => new Device(device, this));
 		const deviceIds = devices.map((device) => device.id);
 
-		const [variants] = await Promise.all([
-			Promise.all(
-				devices.map((device) => this.variantRepository.getCachedDeviceVariants(device.id))
-			),
-			this.propertyRepository.preloadDeviceProperties(deviceIds),
-			this.variantRepository.preloadDeviceVariants(deviceIds),
-			this.listingRepository.preloadDeviceListings(deviceIds)
+		// Start preloading everything in truly parallel fashion
+		await Promise.all([
+			// Properties - single query
+			(async () => {
+				await this.propertyRepository.preloadDeviceProperties(deviceIds);
+			})(),
+			// Listings - single query
+			(async () => {
+				await this.listingRepository.preloadDeviceListings(deviceIds);
+			})(),
+			// Variants - parallel queries
+			(async () => {
+				await this.variantRepository.preloadDeviceVariants(deviceIds);
+
+				// Get variants and their options in parallel
+				const variants = await Promise.all(
+					devices.map((device) => this.variantRepository.getCachedDeviceVariants(device.id))
+				);
+				const variantIds = [...new Set(variants.flat().map((v) => v.id))];
+
+				if (variantIds.length > 0) {
+					await this.variantRepository.preloadVariantOptions(variantIds);
+				}
+			})()
 		]);
 
-		const variantIds = [...new Set(variants.flat().map((variant) => variant.id))];
-		if (variantIds.length > 0) {
-			await this.variantRepository.preloadVariantOptions(variantIds);
+		// Transform to JSON in parallel with optimized batching
+		const BATCH_SIZE = 5; // Smaller batches for better parallelization
+		const batches = [];
+
+		// Process in smaller parallel batches
+		for (let i = 0; i < devices.length; i += BATCH_SIZE) {
+			const batch = devices.slice(i, i + BATCH_SIZE);
+			batches.push(Promise.all(batch.map((device) => device.toJson())));
 		}
 
-		const items = await Promise.all(devices.map((device) => device.toJson()));
+		const items = (await Promise.all(batches)).flat();
 
 		return {
 			...paginatedDevices,
