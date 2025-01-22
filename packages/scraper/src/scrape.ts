@@ -9,6 +9,7 @@ const SCRAPE_INTERVAL = parseInt(process.env.SCRAPE_INTERVAL_MS ?? '600000', 10)
 const PAGE_TIMEOUT = parseInt(process.env.PAGE_TIMEOUT_MS ?? '60000', 10); // Default 1 minute
 const MAX_RETRIES = parseInt(process.env.MAX_RETRIES ?? '3', 10);
 const RETRY_DELAY = parseInt(process.env.RETRY_DELAY_MS ?? '5000', 10);
+const MAX_CONCURRENT_SCRAPES = parseInt(process.env.MAX_CONCURRENT_SCRAPES ?? '5', 10); // Default 5 threads
 
 function timestamp() {
 	return new Date().toISOString();
@@ -61,6 +62,33 @@ class RateLimiter {
 		const now = Date.now();
 		const timeLeft = SCRAPE_INTERVAL - (now - lastTime);
 		return Math.max(0, timeLeft);
+	}
+}
+
+class ConcurrencyLimiter {
+	private running = 0;
+	private queue: (() => void)[] = [];
+
+	constructor(private maxConcurrent: number) {}
+
+	async acquire(): Promise<void> {
+		if (this.running < this.maxConcurrent) {
+			this.running++;
+			return;
+		}
+
+		return new Promise<void>((resolve) => {
+			this.queue.push(resolve);
+		});
+	}
+
+	release(): void {
+		this.running--;
+		const next = this.queue.shift();
+		if (next) {
+			this.running++;
+			next();
+		}
 	}
 }
 
@@ -172,7 +200,8 @@ async function main() {
 	- Scrape interval: ${SCRAPE_INTERVAL}ms
 	- Page timeout: ${PAGE_TIMEOUT}ms
 	- Max retries: ${MAX_RETRIES}
-	- Retry delay: ${RETRY_DELAY}ms\n`);
+	- Retry delay: ${RETRY_DELAY}ms
+	- Max concurrent scrapes: ${MAX_CONCURRENT_SCRAPES}\n`);
 
 	const browser = await chromium.launch({
 		args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -183,6 +212,7 @@ async function main() {
 	});
 
 	const rateLimiter = new RateLimiter();
+	const concurrencyLimiter = new ConcurrencyLimiter(MAX_CONCURRENT_SCRAPES);
 
 	async function cleanup() {
 		console.log('\nShutting down gracefully...');
@@ -203,9 +233,14 @@ async function main() {
 			const deviceListings = await db.select().from(deviceListingsTable);
 			console.log(`[${timestamp()}] Checking ${deviceListings.length} listings...\n`);
 
-			const scrapeTasks = deviceListings.map((listing) =>
-				scrapeListing(listing, context, rateLimiter)
-			);
+			const scrapeTasks = deviceListings.map(async (listing) => {
+				await concurrencyLimiter.acquire();
+				try {
+					return await scrapeListing(listing, context, rateLimiter);
+				} finally {
+					concurrencyLimiter.release();
+				}
+			});
 
 			const results = await Promise.allSettled(scrapeTasks);
 
