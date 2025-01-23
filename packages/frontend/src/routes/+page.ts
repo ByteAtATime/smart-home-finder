@@ -48,24 +48,32 @@ export const load: PageLoad = async ({ fetch, url }) => {
 		searchParams.set('sortDirection', sortDirection);
 	}
 
-	const response = await fetch(`/api/devices?${searchParams.toString()}`);
+	const dataPromise = fetch(`/api/devices?${searchParams.toString()}`).then(async (response) => {
+		const data = (await response.json()) as {
+			success: boolean;
+			total: number;
+			pageSize: number;
+			page: number;
+			devices: DeviceJson[];
+			priceBounds: [number, number];
+			propertiesByDeviceType: Record<string, PropertyJson[]>;
+			availableDeviceTypes: DeviceType[];
+		};
 
-	const data = (await response.json()) as {
-		success: boolean;
-		total: number;
-		pageSize: number;
-		page: number;
-		devices: DeviceJson[];
-		priceBounds: [number, number];
-		propertiesByDeviceType: Record<string, PropertyJson[]>;
-		availableDeviceTypes: DeviceType[];
-	};
+		if (!data.success) {
+			throw new Error('Failed to load devices', { cause: data });
+		}
 
-	if (!data.success) {
-		throw new Error('Failed to load devices', { cause: data });
-	}
+		return data;
+	});
 
 	return {
-		...data
+		devices: dataPromise.then((data) => data.devices),
+		total: dataPromise.then((data) => data.total),
+		page: dataPromise.then((data) => data.page),
+		pageSize: dataPromise.then((data) => data.pageSize),
+		priceBounds: dataPromise.then((data) => data.priceBounds),
+		propertiesByDeviceType: dataPromise.then((data) => data.propertiesByDeviceType),
+		availableDeviceTypes: dataPromise.then((data) => data.availableDeviceTypes)
 	};
 };
