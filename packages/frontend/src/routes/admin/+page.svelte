@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
 	import { Separator } from '$lib/components/ui/separator';
-	import type { PageData } from './$types';
 
 	interface DeviceTypeDistribution {
 		type: string;
@@ -9,7 +8,7 @@
 		percentage: number;
 	}
 
-	let { data } = $props<{ data: PageData }>();
+	let { data } = $props();
 
 	const formatCurrency = (value: number) => {
 		return new Intl.NumberFormat('en-US', {

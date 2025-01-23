@@ -218,7 +218,7 @@ BEST PRACTICES:
 <script lang="ts">
     import type { User } from './types';
 
-    let { user } = $props<{ user: User }>();
+    let { user }: { user: User } = $props();
     let count = $state<number>(0);
 </script>
 ```

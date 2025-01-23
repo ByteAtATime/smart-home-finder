@@ -4,7 +4,6 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 	import { goto } from '$app/navigation';
-	import type { PageData } from './$types';
 
 	interface Device {
 		id: string;
@@ -16,7 +15,7 @@
 		updatedAt: string | Date;
 	}
 
-	let { data } = $props<{ data: PageData }>();
+	let { data } = $props();
 
 	const formatDate = (date: string | Date) => {
 		return new Intl.DateTimeFormat('en-US', {

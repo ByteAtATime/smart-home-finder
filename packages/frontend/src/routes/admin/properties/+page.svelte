@@ -5,10 +5,9 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import { goto } from '$app/navigation';
 	import { enhance } from '$app/forms';
-	import type { PropertyData } from '@smart-home-finder/common/types';
 	import type { ActionResult } from '@sveltejs/kit';
 
-	let { data } = $props<{ properties: PropertyData[] }>();
+	let { data } = $props();
 
 	// Format date
 	const formatDate = (date: Date) => {

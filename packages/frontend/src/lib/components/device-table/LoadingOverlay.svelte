@@ -2,7 +2,7 @@
 	import Spinner from '../Spinner.svelte';
 	import { navigating } from '$app/state';
 
-	let { isLoading: propsLoading = false } = $props<{ isLoading?: boolean }>();
+	let { isLoading: propsLoading = false } = $props();
 	let isLoading = $state(false);
 	let spinnerPromise: Promise<unknown> | null = $state(null);
 
