@@ -110,6 +110,7 @@
 								<img
 									src={row.original.images[0]}
 									alt={row.original.name}
+									loading="lazy"
 									class="h-full w-full rounded object-cover"
 								/>
 							{/if}
