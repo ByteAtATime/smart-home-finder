@@ -134,9 +134,10 @@
 			<div class="mb-4 flex justify-end">
 				<DeviceTableSort onSortChange={handleSortChange} />
 			</div>
-			<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
+			<div class="relative">
+				<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
+				<LoadingOverlay {isLoading} />
+			</div>
 		</div>
 	</div>
-
-	<LoadingOverlay {isLoading} />
 </div>
