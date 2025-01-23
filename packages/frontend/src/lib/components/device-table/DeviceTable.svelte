@@ -135,7 +135,14 @@
 				<DeviceTableSort onSortChange={handleSortChange} />
 			</div>
 			<div class="relative">
-				<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
+				<DeviceTableGrid
+					{devices}
+					{total}
+					{page}
+					{pageSize}
+					onPageChange={handlePageChange}
+					{isLoading}
+				/>
 				<LoadingOverlay {isLoading} />
 			</div>
 		</div>
