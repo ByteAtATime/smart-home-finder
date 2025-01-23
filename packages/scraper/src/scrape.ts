@@ -157,7 +157,7 @@ async function scrapeListing(
 	let page: Page | undefined;
 	try {
 		page = await setupPage(context);
-		const response = await page.goto(listing.url, { waitUntil: 'networkidle' });
+		const response = await page.goto(listing.url, { waitUntil: 'domcontentloaded' });
 
 		if (!response?.ok()) {
 			throw new Error(`HTTP ${response?.status()}: ${response?.statusText()}`);
