@@ -1,44 +1,47 @@
 <script lang="ts">
 	import DeviceTable from '$lib/components/device-table/DeviceTable.svelte';
+	import LoadingOverlay from '$lib/components/device-table/LoadingOverlay.svelte';
+	import type { DeviceJson } from '$lib/server/devices/device';
+	import type { PropertyJson } from '$lib/server/properties/property';
+	import type { DeviceType } from '@smart-home-finder/common/types';
+
+	type DeviceData = {
+		success: boolean;
+		total: number;
+		pageSize: number;
+		page: number;
+		devices: DeviceJson[];
+		priceBounds: [number, number];
+		propertiesByDeviceType: Record<string, PropertyJson[]>;
+		availableDeviceTypes: DeviceType[];
+	};
 
 	let { data } = $props();
+	let deviceData = $state<DeviceData | null>(null);
+	let isStreaming = $state(true);
+
+	$effect(() => {
+		isStreaming = true;
+		data.streamed.deviceData.then((result) => {
+			deviceData = result;
+			isStreaming = false;
+		});
+	});
 </script>
 
 <main class="mx-auto max-w-screen-lg p-4 xl:max-w-screen-xl">
-	{#await data.devices}
-		<DeviceTable
-			devices={[]}
-			total={0}
-			page={1}
-			pageSize={10}
-			absolutePriceRange={[0, 0]}
-			propertiesByDeviceType={{}}
-			availableDeviceTypes={[]}
-			isLoading={true}
-		/>
-	{:then devices}
-		{#await Promise.all( [data.total, data.page, data.pageSize, data.priceBounds, data.propertiesByDeviceType, data.availableDeviceTypes] )}
+	<div class="relative min-h-[400px]">
+		{#if deviceData}
 			<DeviceTable
-				{devices}
-				total={0}
-				page={1}
-				pageSize={10}
-				absolutePriceRange={[0, 0]}
-				propertiesByDeviceType={{}}
-				availableDeviceTypes={[]}
-				isLoading={true}
+				devices={deviceData.devices}
+				total={deviceData.total}
+				page={deviceData.page}
+				pageSize={deviceData.pageSize}
+				absolutePriceRange={deviceData.priceBounds}
+				propertiesByDeviceType={deviceData.propertiesByDeviceType}
+				availableDeviceTypes={deviceData.availableDeviceTypes}
 			/>
-		{:then [total, page, pageSize, priceBounds, propertiesByDeviceType, availableDeviceTypes]}
-			<DeviceTable
-				{devices}
-				{total}
-				{page}
-				{pageSize}
-				absolutePriceRange={priceBounds}
-				{propertiesByDeviceType}
-				{availableDeviceTypes}
-				isLoading={false}
-			/>
-		{/await}
-	{/await}
+		{/if}
+		<LoadingOverlay isLoading={isStreaming} />
+	</div>
 </main>

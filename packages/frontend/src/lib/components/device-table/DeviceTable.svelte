@@ -16,7 +16,6 @@
 		absolutePriceRange: [number, number];
 		propertiesByDeviceType: Record<string, PropertyJson[]>;
 		availableDeviceTypes: DeviceType[];
-		isLoading?: boolean;
 	};
 
 	let {
@@ -26,8 +25,7 @@
 		pageSize,
 		absolutePriceRange: databasePriceRange,
 		propertiesByDeviceType,
-		availableDeviceTypes,
-		isLoading = false
+		availableDeviceTypes
 	}: DeviceTableProps = $props();
 
 	function handleFiltersChange(filters: {
@@ -134,17 +132,9 @@
 			<div class="mb-4 flex justify-end">
 				<DeviceTableSort onSortChange={handleSortChange} />
 			</div>
-			<div class="relative">
-				<DeviceTableGrid
-					{devices}
-					{total}
-					{page}
-					{pageSize}
-					onPageChange={handlePageChange}
-					{isLoading}
-				/>
-				<LoadingOverlay {isLoading} />
-			</div>
+			<DeviceTableGrid {devices} {total} {page} {pageSize} onPageChange={handlePageChange} />
 		</div>
 	</div>
+
+	<LoadingOverlay />
 </div>

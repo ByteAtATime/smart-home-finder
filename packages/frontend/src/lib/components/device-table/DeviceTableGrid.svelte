@@ -19,17 +19,9 @@
 		page: number;
 		pageSize: number;
 		onPageChange: (page: number) => void;
-		isLoading?: boolean;
 	};
 
-	let {
-		devices,
-		total,
-		page,
-		pageSize,
-		onPageChange,
-		isLoading = false
-	}: DeviceTableGridProps = $props();
+	let { devices, total, page, pageSize, onPageChange }: DeviceTableGridProps = $props();
 
 	const columns: ColumnDef<DeviceJson>[] = [
 		{
@@ -132,11 +124,7 @@
 				{:else}
 					<Table.Row>
 						<Table.Cell colspan={columns.length + 2} class="h-24 text-center">
-							{#if isLoading}
-								Loading devices...
-							{:else}
-								No devices found.
-							{/if}
+							No devices found.
 						</Table.Cell>
 					</Table.Row>
 				{/each}
