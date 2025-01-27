@@ -215,9 +215,6 @@ export class PostgresDeviceRepository implements IDeviceRepository {
 
 		const whereConditions: SQL[] = [];
 
-		if (filters.deviceType) {
-			whereConditions.push(inArray(devicesTable.deviceType, filters.deviceType));
-		}
 		if (filters.protocol) {
 			whereConditions.push(inArray(devicesTable.protocol, filters.protocol));
 		}
