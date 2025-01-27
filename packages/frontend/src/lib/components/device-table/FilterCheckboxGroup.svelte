@@ -31,8 +31,7 @@
 	<div class="flex items-center gap-2">
 		<Checkbox
 			id={`${idPrefix}-all`}
-			checked={isAllSelected}
-			onCheckedChange={handleSelectAll}
+			bind:checked={() => isAllSelected, handleSelectAll}
 			aria-labelledby={`${idPrefix}-all-label`}
 		/>
 		<Label
