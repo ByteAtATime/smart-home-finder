@@ -102,9 +102,7 @@
 			);
 		}
 
-		if (searchParams.toString()) {
-			goto(`?${searchParams.toString()}`, { keepFocus: true });
-		}
+		goto(`?${searchParams.toString()}`, { keepFocus: true });
 	}
 
 	function handlePageChange(newPage: number) {
