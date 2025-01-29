@@ -39,7 +39,14 @@
 
 {#snippet deviceRow(device: Device)}
 	<Table.Row>
-		<Table.Cell class="font-medium">{device.name}</Table.Cell>
+		<Table.Cell class="font-medium">
+			<a
+				href="/admin/devices/{device.id}"
+				class="transition-colors duration-75 hover:text-blue-700 dark:hover:text-blue-300"
+			>
+				{device.name}
+			</a>
+		</Table.Cell>
 		<Table.Cell class="capitalize">{device.deviceType}</Table.Cell>
 		<Table.Cell class="capitalize">{device.protocol}</Table.Cell>
 		<Table.Cell>{device.variants?.length || 0}</Table.Cell>
