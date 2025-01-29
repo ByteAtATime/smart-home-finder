@@ -15,7 +15,6 @@
 	import type { Snippet } from 'svelte';
 	import type { PropertyData } from '@smart-home-finder/common/types';
 	import { z } from 'zod';
-	import { Checkbox } from '$lib/components/ui/checkbox';
 
 	interface Variant {
 		variantId: number;
@@ -156,7 +155,26 @@
 	<div class="space-y-2">
 		<Label for={property.id}>{property.name}</Label>
 		{#if property.type === 'boolean'}
-			<Checkbox id={property.id} bind:checked={$form.properties[property.id] as boolean} />
+			<Select.Root
+				bind:value={() => $form.properties[property.id]?.toString() ?? 'undefined',
+				(newVal) => {
+					$form.properties[property.id] = newVal == 'undefined' ? undefined : newVal === 'true';
+				}}
+				type="single"
+			>
+				<Select.Trigger class="w-full">
+					{#if $form.properties[property.id] == undefined}
+						<span class="text-muted-foreground">Not set</span>
+					{:else}
+						{$form.properties[property.id] ? 'True' : 'False'}
+					{/if}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="undefined" class="text-muted-foreground">Not set</Select.Item>
+					<Select.Item value="true">True</Select.Item>
+					<Select.Item value="false">False</Select.Item>
+				</Select.Content>
+			</Select.Root>
 		{:else if property.type === 'int' || property.type === 'float'}
 			<Input
 				id={property.id}

@@ -21,6 +21,6 @@ export const schema = z.object({
 		)
 		.default([]),
 	properties: z
-		.record(z.string(), z.union([z.number(), z.string(), z.boolean()]).nullable())
+		.record(z.string(), z.union([z.number(), z.string(), z.boolean()]).nullish())
 		.default({})
 });
