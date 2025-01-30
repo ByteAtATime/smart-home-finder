@@ -1,20 +1,12 @@
 # Smart Home Finder
 
-This project is a smart home device finder application built with SvelteKit, powered by a robust backend and a web scraping system to keep device pricing and availability up-to-date.
+This project is a smart device finder application. I took inspiration from PCPartPicker, so this program can track prices off different sellers, filter by properties (e.g. bulb brightness), sort by price, and more.
 
-## Project Structure
+**The problem it solves**: Let's say my smart home is configured to use the Zigbee protocol. I wanted some simple way to find a list of, say, smart bulbs that are compatible with Zigbee. It would be handy to also find lightbulbs brighter than 1200 lumens, but less than 1600 lumens. Finally, it would be nice to sort by price, cheapest first.
 
-The project is structured into several packages:
+From this set of requirements the first website that comes to mind is PCPartPicker. This website ~~steals~~ takes inspiration from lots of ideas, including most of the features below.
 
-- **`./packages/frontend`**: The frontend application built with SvelteKit.
-- **`./packages/scraper`**: The web scraping system for updating device prices.
-- **`./packages/common`**: Shared code used across the project, including database schema and constants.
-
-### Frontend
-
-The frontend package contains the user interface for browsing and searching smart home devices.
-
-#### Key Features:
+## Key Features:
 
 - Responsive device table with filtering and sorting capabilities.
 - Device detail pages with images, variants, prices, and properties.
@@ -22,7 +14,7 @@ The frontend package contains the user interface for browsing and searching smar
 - Authentication powered by Clerk.
 - Real-time price updates streamed from the backend.
 
-#### Tech Stack:
+## Tech Stack:
 
 - SvelteKit for the framework.
 - Tailwind CSS for styling.
