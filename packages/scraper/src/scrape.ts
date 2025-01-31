@@ -1,4 +1,4 @@
-import { chromium, BrowserContext, Page } from 'playwright';
+import { chromium, BrowserContext, Page, Browser } from 'playwright';
 import { db } from './db';
 import { deviceListingsTable } from '@smart-home-finder/common/schema';
 import { updatePrice } from './updatePrice';
@@ -10,6 +10,7 @@ const PAGE_TIMEOUT = parseInt(process.env.PAGE_TIMEOUT_MS ?? '60000', 10); // De
 const MAX_RETRIES = parseInt(process.env.MAX_RETRIES ?? '3', 10);
 const RETRY_DELAY = parseInt(process.env.RETRY_DELAY_MS ?? '5000', 10);
 const MAX_CONCURRENT_SCRAPES = parseInt(process.env.MAX_CONCURRENT_SCRAPES ?? '5', 10); // Default 5 threads
+const CONTEXT_LIFETIME_MS = parseInt(process.env.CONTEXT_LIFETIME_MS ?? '7200000', 10); // Default 2 hours
 
 function timestamp() {
 	return new Date().toISOString();
@@ -88,6 +89,61 @@ class ConcurrencyLimiter {
 		if (next) {
 			this.running++;
 			next();
+		}
+	}
+}
+
+class ContextManager {
+	private context: BrowserContext | null = null;
+	private browser: Browser | null = null;
+	private lastRotation: number = Date.now();
+
+	constructor(private lifetimeMs: number = CONTEXT_LIFETIME_MS) {}
+
+	async initialize() {
+		this.browser = await chromium.launch({
+			args: ['--no-sandbox', '--disable-setuid-sandbox']
+		});
+		await this.rotateContext();
+	}
+
+	async getContext(): Promise<BrowserContext> {
+		if (!this.context || this.shouldRotate()) {
+			await this.rotateContext();
+		}
+		return this.context!;
+	}
+
+	private shouldRotate(): boolean {
+		return Date.now() - this.lastRotation >= this.lifetimeMs;
+	}
+
+	private async rotateContext() {
+		console.log(`[${timestamp()}] Rotating browser context to prevent memory leaks...`);
+
+		// Close old context if it exists
+		if (this.context) {
+			await this.context.close().catch((err) => {
+				console.error('Error closing old context:', err);
+			});
+		}
+
+		// Create new context
+		this.context = await this.browser!.newContext({
+			userAgent:
+				'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+		});
+		this.lastRotation = Date.now();
+
+		console.log(`[${timestamp()}] Browser context rotated successfully`);
+	}
+
+	async cleanup() {
+		if (this.context) {
+			await this.context.close().catch(() => {});
+		}
+		if (this.browser) {
+			await this.browser.close().catch(() => {});
 		}
 	}
 }
@@ -201,22 +257,18 @@ async function main() {
 	- Page timeout: ${PAGE_TIMEOUT}ms
 	- Max retries: ${MAX_RETRIES}
 	- Retry delay: ${RETRY_DELAY}ms
-	- Max concurrent scrapes: ${MAX_CONCURRENT_SCRAPES}\n`);
+	- Max concurrent scrapes: ${MAX_CONCURRENT_SCRAPES}
+	- Context lifetime: ${CONTEXT_LIFETIME_MS}ms\n`);
 
-	const browser = await chromium.launch({
-		args: ['--no-sandbox', '--disable-setuid-sandbox']
-	});
-	const context = await browser.newContext({
-		userAgent:
-			'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-	});
+	const contextManager = new ContextManager();
+	await contextManager.initialize();
 
 	const rateLimiter = new RateLimiter();
 	const concurrencyLimiter = new ConcurrencyLimiter(MAX_CONCURRENT_SCRAPES);
 
 	async function cleanup() {
 		console.log('\nShutting down gracefully...');
-		await browser.close().catch(() => {});
+		await contextManager.cleanup();
 		process.exit(0);
 	}
 
@@ -233,6 +285,7 @@ async function main() {
 			const deviceListings = await db.select().from(deviceListingsTable);
 			console.log(`[${timestamp()}] Checking ${deviceListings.length} listings...\n`);
 
+			const context = await contextManager.getContext();
 			const scrapeTasks = deviceListings.map(async (listing) => {
 				await concurrencyLimiter.acquire();
 				try {
